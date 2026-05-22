@@ -1,2 +1,5 @@
 vendor/*
 !vendor/.empty
+downloads/
+rom-downloader
+rom-downloader.exe

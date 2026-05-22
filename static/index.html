@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RetroROM Downloader</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="background-glow bg-glow-1"></div>
+    <div class="background-glow bg-glow-2"></div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo-area">
+                <span class="logo-icon">👾</span>
+                <h1>RetroROM <span>Downloader</span></h1>
+            </div>
+            <div class="server-config" id="server-config">
+                <span class="pulse-indicator"></span>
+                <span class="config-text">Initializing...</span>
+            </div>
+        </header>
+
+        <main class="app-main">
+            <!-- Search Section -->
+            <section class="card search-card">
+                <div class="card-header">
+                    <h2>Search ROMs</h2>
+                    <p class="subtitle">Search and scrape retro games from selected sources</p>
+                </div>
+                <form id="search-form" class="search-form">
+                    <div class="form-group flex-1">
+                        <label for="search-query">Game Title</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">🔍</span>
+                            <input type="text" id="search-query" placeholder="e.g. Pokemon Emerald, Super Mario, Sonic..." required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="source-select">Scrape Source</label>
+                        <select id="source-select">
+                            <!-- Dynamically loaded -->
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="search-btn">
+                        <span>Search ROMs</span>
+                    </button>
+                </form>
+            </section>
+
+            <!-- Results & Queue Layout -->
+            <div class="layout-grid">
+                <!-- Results Panel -->
+                <section class="card results-card">
+                    <div class="card-header">
+                        <h2>Search Results</h2>
+                        <span class="badge" id="results-count">0 items found</span>
+                    </div>
+                    
+                    <div id="no-results" class="empty-state">
+                        <span class="empty-icon">🎮</span>
+                        <h3>No ROMs Searched Yet</h3>
+                        <p>Type a game name and click search to scan the net.</p>
+                    </div>
+
+                    <div id="search-loading" class="skeleton-wrapper hidden">
+                        <div class="skeleton-card"></div>
+                        <div class="skeleton-card"></div>
+                        <div class="skeleton-card"></div>
+                    </div>
+
+                    <div id="results-grid" class="results-grid hidden">
+                        <!-- Dynamically populated -->
+                    </div>
+                </section>
+
+                <!-- Queue / Downloads Panel -->
+                <section class="card queue-card">
+                    <div class="card-header">
+                        <h2>Download Queue</h2>
+                        <span class="badge badge-accent" id="active-count">0 active</span>
+                    </div>
+
+                    <div id="empty-queue" class="empty-state">
+                        <span class="empty-icon">📥</span>
+                        <h3>Queue is Empty</h3>
+                        <p>ROMs you download will show up here with live speeds.</p>
+                    </div>
+
+                    <div id="queue-list" class="queue-list">
+                        <!-- Dynamically populated -->
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <footer class="app-footer">
+            <p>Self-hosted Go ROM Downloader &bull; Powered by Colly & Grab</p>
+        </footer>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

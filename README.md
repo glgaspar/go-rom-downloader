@@ -1,108 +1,113 @@
-# Go Rom Downloader
+# RetroROM Downloader
 
-## A small go tool to download roms from known emulator websites
+A modern, self-hosted web application and command-line tool built in Go to easily search, scrape, and download retro gaming ROMs from popular emulator sites.
 
-## Available roms
+![Interface Screenshot](https://github.com/alcmoraes/go-rom-downloader/blob/master/res/screenshot.png)
 
-- Abandonware (DOS) Games
-- Acorn Archimedes ROMs
-- Acorn BBC Micro ROMs
-- Acorn Electron ROMs
-- Amiga
-- Amiga CD / CDTV
-- Amiga CD32
-- Amstrad CPC ROMs
-- Apple ][
-- Atari 2600
-- Atari 5200
-- Atari 7800
-- Atari 800
-- Atari Jaguar
-- Atari Lynx
-- Atari ST
-- Bandai Playdia
-- Bandai Wonderswan
-- Bandai Wonderswan Color
-- CPS1
-- CPS2
-- Capcom Play System 1 / CPS1 ROMs
-- Capcom Play System 2 / CPS2 ROMs
-- Capcom Play System 3 / CPS3 ROMs
-- Commodore 64
-- Commodore 64 Preservation Project (Floppies)
-- Commodore 64 Tapes
-- M.A.M.E. Roms
-- MAME
-- Microsoft XBox
-- Modeler
-- Namco System 12
-- Namco System 22
-- Neo Geo
-- Neo Geo (Arcade) Roms
-- Neo Geo CD
-- Neo Geo Pocket
-- Neo Geo Pocket/Neo Geo Pocket Color Roms
-- Nintendo 64 Roms
-- Nintendo DS Roms
-- Nintendo Entertainment System Roms
-- Nintendo Famicom Disk System
-- Nintendo Gameboy Advance Roms
-- Nintendo Gameboy Colour Roms
-- Nintendo Gameboy Roms
-- Nintendo Gamecube
-- Nintendo Virtual Boy
-- Nintendo Wii
-- Nokia N-Gage
-- PC Engine CD/Turbo Duo/TurboGrafx-CD
-- PC Engine/TurboGrafx-16
-- PC-FX
-- Panasonic 3DO
-- Philips CD-i
-- Raine
-- ScummVM (Classic Adventure titles)
-- Sega 32x
-- Sega CD
-- Sega Dreamcast
-- Sega Game Gear
-- Sega Genesis
-- Sega Genesis/MegaDrive
-- Sega Master System
-- Sega Model 2
-- Sega NAOMI
-- Sega Saturn
-- Sharp X68000
-- Sony PSP eBoots (PSX2PSP eBoots) (Play PS1 on PSP)
-- Sony Playstation
-- Sony Playstation (Demo)
-- Sony Playstation 2
-- Sony Playstation Portable
-- Sony PocketStation ROMs
-- Super Nintendo Roms
-- ZX Spectrum (Tapes)
-- ZX Spectrum (Z80)
-- Zinc Roms
+---
 
-## Usage
+## 🚀 Key Features
 
-## **1. From source**
+*   **Premium Web UI**: Responsive dark-mode interface featuring neon styling, a clean search console, and visual results grid.
+*   **Live Background Queue**: Track multiple active downloads with live progress bars, exact file sizes, and speeds in real-time.
+*   **Docker Volume Mapping**: Volume mount your host folder to have all downloaded ROMs save directly to your media server or local library.
+*   **Fully Self-Contained**: The web application and all static frontend assets (HTML, CSS, JS) are embedded directly inside a single static Go binary.
+*   **CLI Mode Fallback**: Keep your legacy scripts running; interactive terminal mode is still fully supported.
 
-### Dependencies
+---
 
-- [go](https://github.com/golang/go)
-- [dep](https://github.com/golang/dep)
+## 🐳 Running with Docker (Recommended)
 
-```shell
-go get github.com/alcmoraes/go-rom-downloader
-cd $GOPATH/src/github.com/alcmoraes/go-rom-downloader
-make build
-make run
+Run the self-hosted app in seconds using Docker or Docker Compose.
+
+### Method A: Docker Compose (Easiest)
+
+1.  **Start the container**:
+    ```bash
+    docker compose up -d
+    ```
+2.  Open **`http://localhost:8080`** in your browser.
+3.  All downloaded ROMs will be saved to your host machine's `./downloads` directory (automatically created).
+
+### Method B: Pure Docker CLI
+
+Map your host machine's media path to save ROMs directly to a specific folder:
+
+```bash
+docker run -d \
+  -p 8080:8080 \
+  -v /path/to/your/roms:/downloads \
+  --name rom-downloader \
+  --restart unless-stopped \
+  go-rom-downloader:latest
 ```
 
-## **2. From build**
+---
 
-You can also opt to directly use the compiled version of the project
+## 🛠️ Local Development & Manual Build
 
-- Linux: https://github.com/alcmoraes/go-rom-downloader/raw/master/build/rom-downloader
-- Windows: https://github.com/alcmoraes/go-rom-downloader/raw/master/build/rom-downloader.exe
+The project is built on **Go Modules** (requires Go 1.16+).
 
-![Screenshot](https://github.com/alcmoraes/go-rom-downloader/blob/master/res/screenshot.png)
+### Prerequisites
+*   [Go](https://go.dev/) (1.16 or higher)
+
+### Build Steps
+
+1.  **Clone the repository**:
+    ```bash
+    git clone https://github.com/alcmoraes/go-rom-downloader.git
+    cd go-rom-downloader
+    ```
+2.  **Tidy dependencies and compile**:
+    ```bash
+    go mod tidy
+    go build -o rom-downloader .
+    ```
+3.  **Run the Web Server**:
+    ```bash
+    # Starts server on http://localhost:8080, saving downloads to ./downloads
+    ./rom-downloader
+    ```
+
+### Command Line Flags & Environment Variables
+
+You can customize the Web Server using command-line flags or environment variables:
+
+| Flag | Environment Variable | Default | Description |
+|---|---|---|---|
+| `-port` | `PORT` | `8080` | Network port for the web server to listen on. |
+| `-dir` | `DOWNLOADS_DIR` | `./downloads` | Local path where downloaded files are saved. |
+| `-cli` | *N/A* | `false` | Fall back to the original interactive terminal CLI mode. |
+
+**Example using flags:**
+```bash
+./rom-downloader -port 9000 -dir /mnt/games/retro
+```
+
+**Example using env variables:**
+```bash
+PORT=9000 DOWNLOADS_DIR=/mnt/games/retro ./rom-downloader
+```
+
+---
+
+## 🎮 Running in Legacy CLI Mode
+
+If you prefer to search and download ROMs directly in your terminal, run the application with the `-cli` flag:
+
+```bash
+./rom-downloader -cli
+```
+
+---
+
+## 📁 Project Structure
+
+*   `main.go`: Application entrypoint, parses CLI flags, and bootstraps CLI or Web Mode.
+*   `web.go`: Embedded single-page frontend server and REST API handlers.
+*   `downloader.go`: Thread-safe background download scheduler and Grab progress manager.
+*   `cli.go`: Original interactive terminal user prompts.
+*   `static/`: Elegant Vanilla CSS, HTML5 layouts, and JS state controllers.
+*   `sources/`: Custom scrapers for sites like Coolrom and Emuparadise.
+*   `domains/`: ROM entity structures.
+*   `utils/`: Terminal clearing and system functions.

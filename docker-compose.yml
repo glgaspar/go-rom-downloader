@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  rom-downloader:
+    build: .
+    container_name: rom-downloader
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./downloads:/downloads
+    environment:
+      - PORT=8080
+      - DOWNLOADS_DIR=/downloads
+    restart: unless-stopped
