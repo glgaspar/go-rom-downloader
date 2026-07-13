@@ -8,6 +8,8 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
+	"os/exec"
 	"time"
 
 	"github.com/alcmoraes/go-rom-downloader/sources"
@@ -111,6 +113,46 @@ func handleConfig(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func handleOrganize(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, `{"error":"Method not allowed"}`, http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Run post-processing script with no arguments to scan downloadsDir
+	scriptPath := "/app/post_process.py"
+	if _, err := os.Stat(scriptPath); os.IsNotExist(err) {
+		scriptPath = "./post_process.py"
+		if _, err := os.Stat(scriptPath); os.IsNotExist(err) {
+			http.Error(w, `{"error":"Post-processing script not found"}`, http.StatusInternalServerError)
+			return
+		}
+	}
+
+	cmd := exec.Command("python3", scriptPath)
+	cmd.Env = os.Environ()
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Printf("Manual organization failed: %v, Output: %s", err, string(output))
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error":   fmt.Sprintf("Failed to run organization: %v", err),
+			"details": string(output),
+		})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{
+		"status":  "success",
+		"message": "Loose files organized successfully.",
+		"output":  string(output),
+	})
+}
+
 // runWebServer bootstraps the net/http multiplexer and starts listening.
 func runWebServer(port string) {
 	mux := http.NewServeMux()
@@ -140,6 +182,7 @@ func runWebServer(port string) {
 	mux.HandleFunc("POST /api/download", handleDownload)
 	mux.HandleFunc("GET /api/downloads", handleDownloads)
 	mux.HandleFunc("GET /api/config", handleConfig)
+	mux.HandleFunc("POST /api/organize", handleOrganize)
 
 	addr := ":" + port
 	log.Printf("== GO ROM DOWNLOADER WEB SERVER ==")

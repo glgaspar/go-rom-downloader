@@ -83,7 +83,10 @@
                 <section class="card queue-card">
                     <div class="card-header">
                         <h2>Download Queue</h2>
-                        <span class="badge badge-accent" id="active-count">0 active</span>
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <button id="organize-btn" class="btn btn-secondary btn-download-action">Organize Loose ROMs</button>
+                            <span class="badge badge-accent" id="active-count">0 active</span>
+                        </div>
                     </div>
 
                     <div id="empty-queue" class="empty-state">

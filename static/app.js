@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const emptyQueue = document.getElementById('empty-queue');
     const queueList = document.getElementById('queue-list');
     const serverConfig = document.getElementById('server-config');
+    const organizeBtn = document.getElementById('organize-btn');
 
     // State Store
     let sources = [];
@@ -383,5 +384,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 toast.remove();
             }, 300);
         }, 4000);
+    }
+
+    // Handle "Organize Loose ROMs" Button Click
+    if (organizeBtn) {
+        organizeBtn.addEventListener('click', async () => {
+            organizeBtn.disabled = true;
+            organizeBtn.textContent = 'Organizing...';
+            try {
+                const res = await fetch('/api/organize', { method: 'POST' });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(data.message || 'Loose files organized successfully!', 'success');
+                } else {
+                    showToast(data.error || 'Failed to organize files', 'danger');
+                }
+            } catch (err) {
+                console.error('Error organizing files:', err);
+                showToast('Network error while organizing files', 'danger');
+            } finally {
+                organizeBtn.disabled = false;
+                organizeBtn.textContent = 'Organize Loose ROMs';
+            }
+        });
     }
 });
