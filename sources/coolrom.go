@@ -14,12 +14,19 @@ type CoolromSource struct {
 	c         *colly.Collector
 }
 
+func (self *CoolromSource) newCollector() *colly.Collector {
+	return colly.NewCollector(
+		colly.UserAgent("Mozilla/5.0 (Linux; Android 6.0; SAMSUNG SM-G930F Build/MMB29K) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/4.0 Chrome/44.0.2403.133 Mobile Safari/537.36"),
+	)
+}
+
 func (self *CoolromSource) Lookup(name string) []domains.Rom {
 
 	roms := []domains.Rom{}
+	c := self.newCollector()
 
 	// Find and visit all links
-	self.c.OnHTML("ul[data-role=listview] a", func(e *colly.HTMLElement) {
+	c.OnHTML("ul[data-role=listview] a", func(e *colly.HTMLElement) {
 		roms = append(roms, *domains.CreateRom(
 			e.ChildText("h3"),
 			e.ChildText("p"),
@@ -29,23 +36,20 @@ func (self *CoolromSource) Lookup(name string) []domains.Rom {
 	})
 
 	// Do the first query
-	self.c.Visit(fmt.Sprintf(self.Endpoint+self.LookupURL, name))
-
-	self.c.Wait()
+	c.Visit(fmt.Sprintf(self.Endpoint+self.LookupURL, name))
 
 	return roms
 
 }
 
 func (self *CoolromSource) GetDownloadLink(rom *domains.Rom) string {
-	self.c.OnHTML("form[name=dlform] input[name=id]", func(e *colly.HTMLElement) {
+	c := self.newCollector()
+	c.OnHTML("form[name=dlform] input[name=id]", func(e *colly.HTMLElement) {
 		romURL := fmt.Sprintf("http://m.coolrom.com.au/download?id=%s&type=rom", e.Attr("value"))
 		rom.SetDownloadURL(romURL)
 	})
 
-	self.c.Visit(self.Endpoint + rom.URL)
-
-	self.c.Wait()
+	c.Visit(self.Endpoint + rom.URL)
 
 	return rom.DownloadURL
 }
@@ -59,3 +63,4 @@ func NewCoolromSource() *CoolromSource {
 		),
 	}
 }
+

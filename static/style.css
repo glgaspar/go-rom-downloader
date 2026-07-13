@@ -519,6 +519,11 @@ body {
     color: #34d399;
 }
 
+.status-decompressing {
+    background: rgba(217, 70, 239, 0.15);
+    color: #e879f9;
+}
+
 .status-failed {
     background: rgba(239, 68, 68, 0.15);
     color: #f87171;

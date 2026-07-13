@@ -5,11 +5,13 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/alcmoraes/go-rom-downloader/domains"
 	"github.com/alcmoraes/go-rom-downloader/sources"
+	"github.com/alcmoraes/go-rom-downloader/utils"
 	"github.com/cavaliergopher/grab/v3"
 )
 
@@ -90,6 +92,10 @@ func startBackgroundDownload(task *DownloadTask, sourceName, romURL string) {
 		return
 	}
 
+	if strings.Contains(dlLink, "romsgames.net") {
+		req.HTTPRequest.Header.Set("Referer", "https://www.romsgames.net/")
+	}
+
 	resp := client.Do(req)
 	
 	downloadsMu.Lock()
@@ -115,17 +121,49 @@ downloadLoop:
 		}
 	}
 
-	downloadsMu.Lock()
-	defer downloadsMu.Unlock()
-
 	if err := resp.Err(); err != nil {
+		downloadsMu.Lock()
 		task.Status = "failed"
 		task.Error = err.Error()
+		downloadsMu.Unlock()
 		log.Printf("Download task %s failed: %v", task.ID, err)
 	} else {
-		task.Status = "completed"
-		task.Progress = 100.0
-		task.Filename = filepath.Base(resp.Filename)
-		log.Printf("Download task %s completed: %s", task.ID, task.Filename)
+		lowerPath := strings.ToLower(resp.Filename)
+		isArchive := strings.HasSuffix(lowerPath, ".zip") ||
+			strings.HasSuffix(lowerPath, ".tar.gz") ||
+			strings.HasSuffix(lowerPath, ".tgz") ||
+			strings.HasSuffix(lowerPath, ".gz")
+
+		if isArchive {
+			downloadsMu.Lock()
+			task.Status = "decompressing"
+			task.Filename = filepath.Base(resp.Filename)
+			downloadsMu.Unlock()
+
+			log.Printf("Download task %s decompressing...", task.ID)
+			extractedFiles, decErr := utils.DecompressAndCleanup(resp.Filename)
+
+			downloadsMu.Lock()
+			if decErr != nil {
+				task.Status = "failed"
+				task.Error = decErr.Error()
+				log.Printf("Download task %s decompression failed: %v", task.ID, decErr)
+			} else {
+				task.Status = "completed"
+				task.Progress = 100.0
+				if len(extractedFiles) > 0 {
+					task.Filename = filepath.Base(extractedFiles[0])
+				}
+				log.Printf("Download task %s completed & decompressed: %s", task.ID, task.Filename)
+			}
+			downloadsMu.Unlock()
+		} else {
+			downloadsMu.Lock()
+			task.Status = "completed"
+			task.Progress = 100.0
+			task.Filename = filepath.Base(resp.Filename)
+			downloadsMu.Unlock()
+			log.Printf("Download task %s completed: %s", task.ID, task.Filename)
+		}
 	}
 }

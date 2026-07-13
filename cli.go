@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/alcmoraes/go-rom-downloader/domains"
@@ -87,6 +88,9 @@ func cliDownload(rom domains.Rom) {
 	client := grab.NewClient()
 	client.UserAgent = "Mozilla/5.0 (Linux; Android 6.0; SAMSUNG SM-G930F Build/MMB29K) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/4.0 Chrome/44.0.2403.133 Mobile Safari/537.36"
 	req, _ := grab.NewRequest(downloadsDir, rom.DownloadURL)
+	if strings.Contains(rom.DownloadURL, "romsgames.net") {
+		req.HTTPRequest.Header.Set("Referer", "https://www.romsgames.net/")
+	}
 	fmt.Printf("Downloading %v...\n", rom.Name)
 
 	resp := client.Do(req)
@@ -110,7 +114,21 @@ Loop:
 		fmt.Fprintf(os.Stderr, "\nDownload failed: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Printf("\nDownload saved to %s/%v \n", downloadsDir, resp.Filename)
+
+	extractedFiles, decErr := utils.DecompressAndCleanup(resp.Filename)
+	if decErr != nil {
+		fmt.Fprintf(os.Stderr, "\nDecompression failed: %v\n", decErr)
+		os.Exit(1)
+	}
+
+	if len(extractedFiles) > 0 {
+		fmt.Printf("\nDownload saved and decompressed: \n")
+		for _, f := range extractedFiles {
+			fmt.Printf("  %s\n", f)
+		}
+	} else {
+		fmt.Printf("\nDownload saved to %s\n", resp.Filename)
+	}
 }
 
 func cliMain() {

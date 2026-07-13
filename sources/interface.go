@@ -5,6 +5,8 @@ import "github.com/alcmoraes/go-rom-downloader/domains"
 var RomSources = map[string]interface{}{
 	"Coolrom": NewCoolromSource(),
 	"Emuparadise": NewEmuparadiseSource(),
+	"Consoleroms": NewConsoleromsSource(),
+	"Romsgames": NewRomsgamesSource(),
 }
 
 type Source interface {

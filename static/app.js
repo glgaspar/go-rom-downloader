@@ -212,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let activeCountVal = 0;
 
         downloads.forEach(task => {
-            if (task.status === 'downloading' || task.status === 'queued') {
+            if (task.status === 'downloading' || task.status === 'queued' || task.status === 'decompressing') {
                 activeCountVal++;
             }
 
@@ -248,6 +248,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span>Transferred: <span class="metric-highlight">${transStr} / ${sizeStr}</span></span>
                         <span>Speed: <span class="metric-highlight">${speedStr}</span></span>
                     `;
+                } else if (task.status === 'decompressing') {
+                    metricLeft.innerHTML = `
+                        <span class="metric-highlight">Decompressing archive...</span>
+                    `;
                 } else if (task.status === 'completed') {
                     metricLeft.innerHTML = `
                         <span class="metric-highlight">Saved as: ${escapeHtml(task.filename)}</span>
@@ -270,6 +274,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     metricHTML = `
                         <span>Transferred: <span class="metric-highlight">${transStr} / ${sizeStr}</span></span>
                         <span>Speed: <span class="metric-highlight">${speedStr}</span></span>
+                    `;
+                } else if (task.status === 'decompressing') {
+                    metricHTML = `
+                        <span class="metric-highlight">Decompressing archive...</span>
                     `;
                 } else if (task.status === 'completed') {
                     metricHTML = `
