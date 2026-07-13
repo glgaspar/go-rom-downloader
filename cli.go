@@ -126,8 +126,10 @@ Loop:
 		for _, f := range extractedFiles {
 			fmt.Printf("  %s\n", f)
 		}
+		runPostProcessing(extractedFiles[0], rom.Console)
 	} else {
 		fmt.Printf("\nDownload saved to %s\n", resp.Filename)
+		runPostProcessing(resp.Filename, rom.Console)
 	}
 }
 

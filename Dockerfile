@@ -18,12 +18,16 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o rom-downloader .
 # Run stage
 FROM alpine:3.19
 
-RUN apk add --no-cache ca-certificates tzdata
+RUN apk add --no-cache ca-certificates tzdata python3 p7zip && \
+    apk add --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing grpcurl
 
 WORKDIR /app
 
 # Copy build artifact
 COPY --from=builder /app/rom-downloader /app/rom-downloader
+
+# Copy post-processing script
+COPY post_process.py /app/post_process.py
 
 # Create default downloads directory and set permissions
 RUN mkdir /downloads && chmod 777 /downloads

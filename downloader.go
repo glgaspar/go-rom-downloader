@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -148,6 +149,7 @@ downloadLoop:
 				task.Status = "failed"
 				task.Error = decErr.Error()
 				log.Printf("Download task %s decompression failed: %v", task.ID, decErr)
+				downloadsMu.Unlock()
 			} else {
 				task.Status = "completed"
 				task.Progress = 100.0
@@ -155,8 +157,11 @@ downloadLoop:
 					task.Filename = filepath.Base(extractedFiles[0])
 				}
 				log.Printf("Download task %s completed & decompressed: %s", task.ID, task.Filename)
+				downloadsMu.Unlock()
+
+				// Run post-processing
+				runPostProcessing(filepath.Join(downloadsDir, task.Filename), task.Console)
 			}
-			downloadsMu.Unlock()
 		} else {
 			downloadsMu.Lock()
 			task.Status = "completed"
@@ -164,6 +169,39 @@ downloadLoop:
 			task.Filename = filepath.Base(resp.Filename)
 			downloadsMu.Unlock()
 			log.Printf("Download task %s completed: %s", task.ID, task.Filename)
+
+			// Run post-processing
+			runPostProcessing(resp.Filename, task.Console)
 		}
+	}
+}
+
+func runPostProcessing(filePath string, consoleName string) {
+	// Find post_process.py
+	scriptPath := "/app/post_process.py"
+	if _, err := os.Stat(scriptPath); os.IsNotExist(err) {
+		scriptPath = "./post_process.py"
+		if _, err := os.Stat(scriptPath); os.IsNotExist(err) {
+			log.Printf("Post-processing script not found at /app/post_process.py or ./post_process.py")
+			return
+		}
+	}
+
+	absPath, err := filepath.Abs(filePath)
+	if err != nil {
+		absPath = filePath
+	}
+
+	log.Printf("Executing post-processing script %s for file %s with console %s", scriptPath, absPath, consoleName)
+	cmd := exec.Command("python3", scriptPath, absPath, consoleName)
+	
+	// Inherit system environment variables
+	cmd.Env = os.Environ()
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Printf("Post-processing failed: %v, Output: %s", err, string(output))
+	} else {
+		log.Printf("Post-processing completed successfully. Output: %s", string(output))
 	}
 }
