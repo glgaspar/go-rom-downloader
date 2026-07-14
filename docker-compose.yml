@@ -11,4 +11,6 @@ services:
     environment:
       - PORT=8080
       - DOWNLOADS_DIR=/downloads
+      - ROMM_API_ADDR=http://localhost:3000
+      - ROMM_API_KEY=
     restart: unless-stopped

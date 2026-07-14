@@ -139,13 +139,13 @@ def get_platform_for_item(item_path, console_name=None):
         if 'playstation 2' in c_name or 'ps2' in c_name or 'playstation 2' in f_name or 'ps2' in f_name:
             return 'ps2'
         elif 'playstation' in c_name or 'psx' in c_name or 'ps1' in c_name or 'playstation' in f_name or 'psx' in f_name or 'ps1' in f_name:
-            return 'ps1'
+            return 'psx'
         else:
             # Fallback based on size: PS1 <= 750MB, PS2 > 750MB
             if size > 786432000:
                 return 'ps2'
             else:
-                return 'ps1'
+                return 'psx'
 
     return platform
 
@@ -172,34 +172,36 @@ def move_and_chown(src, dest):
     except Exception as e:
         print(f"Warning: chown for {dest} failed: {e}")
 
-def trigger_retrom_update():
-    api_addr = os.environ.get("RETROM_API_ADDR")
-    if not api_addr:
-        print("RETROM_API_ADDR environment variable is not set. Skipping library update.")
+def trigger_romm_update():
+    api_addr = os.environ.get("ROMM_API_ADDR") or os.environ.get("ROMM_URL")
+    api_key = os.environ.get("ROMM_API_KEY")
+
+    if not api_addr or not api_key:
+        print("ROMM_API_ADDR/ROMM_URL or ROMM_API_KEY environment variables are not set. Skipping library update.")
         return
 
-    # Add Go bin to PATH where grpcurl might be installed
-    home_dir = os.path.expanduser("~")
-    go_bin = os.path.join(home_dir, "go", "bin")
-    if os.path.exists(go_bin) and go_bin not in os.environ.get("PATH", ""):
-        os.environ["PATH"] = os.environ["PATH"] + os.pathsep + go_bin
+    api_addr = api_addr.rstrip('/')
+    url = f"{api_addr}/api/tasks/run/scan_library"
 
-    grpcurl_path = shutil.which('grpcurl')
-    if not grpcurl_path:
-        print("grpcurl is not installed or not in PATH. Skipping library update.")
-        return
+    print(f"Triggering RomM library update at {url}...")
+    
+    import urllib.request
+    import urllib.error
 
-    print(f"Triggering Retrom library update via gRPC at {api_addr}...")
+    req = urllib.request.Request(url, method='POST')
+    req.add_header('Authorization', f'Bearer {api_key}')
+
     try:
-        cmd = [grpcurl_path, '-plaintext', '-d', '{}', api_addr, 'retrom.LibraryService/UpdateLibrary']
-        result = subprocess.run(cmd, capture_output=True, text=True)
-        if result.returncode == 0:
-            print("Retrom library update triggered successfully.")
-            print(result.stdout)
-        else:
-            print(f"Failed to trigger Retrom library update: {result.stderr}")
+        with urllib.request.urlopen(req, data=b'') as response:
+            status = response.status
+            body = response.read().decode('utf-8')
+            print(f"RomM library update triggered successfully. Status: {status}")
+            if body:
+                print(f"Response: {body}")
+    except urllib.error.HTTPError as e:
+        print(f"Failed to trigger RomM library update (HTTP {e.code}): {e.read().decode('utf-8', errors='ignore')}")
     except Exception as e:
-        print(f"Error triggering Retrom library update: {e}")
+        print(f"Error triggering RomM library update: {e}")
 def main():
     dest_root = os.environ.get("DOWNLOADS_DIR")
     if not dest_root:
@@ -208,6 +210,10 @@ def main():
             dest_root = "./downloads"
     
     dest_root = os.path.abspath(dest_root)
+    # Auto-detect if using RomM's recommended nested 'roms/' directory structure
+    roms_sub = os.path.join(dest_root, "roms")
+    if os.path.isdir(roms_sub):
+        dest_root = roms_sub
     print(f"Completed download payload directory: {dest_root}")
 
     # Case 1: Specific path passed as argument
@@ -228,7 +234,7 @@ def main():
         
         # Don't process if it's already inside a platform subfolder
         parent_dir = os.path.basename(os.path.dirname(item_path))
-        platform_dirs = {'snes', 'n64', 'nds', 'nes', 'gba', 'ps1', 'ps2'}
+        platform_dirs = {'snes', 'n64', 'nds', 'nes', 'gba', 'psx', 'ps2'}
         if parent_dir in platform_dirs:
             print(f"Item '{item_path}' is already inside platform folder '{parent_dir}'.")
             sys.exit(0)
@@ -241,14 +247,14 @@ def main():
             dest_path = os.path.join(target_dir, os.path.basename(item_path))
             print(f"Moving '{item_path}' to '{dest_path}'...")
             move_and_chown(item_path, dest_path)
-            trigger_retrom_update()
+            trigger_romm_update()
         else:
             print(f"No platform matched for item: '{item_path}'")
     
     # Case 2: Scan the destination directory for loose files
     else:
         print(f"Scanning '{dest_root}' for loose ROMs/games...")
-        platform_dirs = {'snes', 'n64', 'nds', 'nes', 'gba', 'ps1', 'ps2'}
+        platform_dirs = {'snes', 'n64', 'nds', 'nes', 'gba', 'psx', 'ps2'}
         moved_any = False
         
         for item in os.listdir(dest_root):
@@ -271,7 +277,7 @@ def main():
                 print(f"Could not map loose item '{item}' to any platform.")
         
         if moved_any:
-            trigger_retrom_update()
+            trigger_romm_update()
 
 if __name__ == '__main__':
     main()

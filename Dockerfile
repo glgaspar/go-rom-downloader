@@ -18,8 +18,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o rom-downloader .
 # Run stage
 FROM alpine:3.19
 
-RUN apk add --no-cache ca-certificates tzdata python3 p7zip && \
-    apk add --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing grpcurl
+RUN apk add --no-cache ca-certificates tzdata python3 p7zip
 
 WORKDIR /app
 

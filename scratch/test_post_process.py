@@ -21,7 +21,7 @@ def test_post_process():
             "pokemon.nds": "nds",
             "metroid.nes": "nes",
             "mariokart.gba": "gba",
-            "tekken.iso": "ps1",  # size <= 750MB -> ps1
+            "tekken.iso": "psx",  # size <= 750MB -> psx
         }
         
         # Create small mock files (content doesn't matter for extension matching)
