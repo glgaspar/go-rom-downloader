@@ -1,29 +1,31 @@
 :root {
-    --bg-dark: #070913;
-    --bg-card: rgba(16, 20, 38, 0.45);
+    --bg-dark: #0a0a0a;
+    --bg-card: #0d0d0d;
+    --bg-card-secondary: #141414;
+    --border-frontdesk: #b3078b;
+    --border-frontdesk-subtle: rgba(179, 7, 139, 0.4);
     --border-glass: rgba(255, 255, 255, 0.08);
-    --border-hover: rgba(255, 255, 255, 0.15);
     
-    --primary: #6366f1;
-    --primary-glow: rgba(99, 102, 241, 0.35);
-    --primary-hover: #4f46e5;
+    --primary: #a71986;
+    --primary-hover: #920671;
+    --primary-glow: rgba(179, 7, 139, 0.35);
     
-    --accent: #d946ef;
-    --accent-glow: rgba(217, 70, 239, 0.25);
+    --accent: #b3078b;
+    --accent-glow: rgba(179, 7, 139, 0.25);
     
     --success: #10b981;
     --success-glow: rgba(16, 185, 129, 0.2);
     --warning: #f59e0b;
     --danger: #ef4444;
 
-    --text-main: #f3f4f6;
-    --text-muted: #9ca3af;
+    --text-main: #ededed;
+    --text-muted: #a1a1aa;
     --text-inverse: #ffffff;
     
     --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-body: 'Inter', Arial, Helvetica, sans-serif;
     
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 * {
@@ -39,7 +41,7 @@ body {
     min-height: 100vh;
     position: relative;
     overflow-x: hidden;
-    padding-bottom: 2rem;
+    padding-bottom: 3rem;
 }
 
 /* Background Glowing Blobs */
@@ -48,20 +50,20 @@ body {
     width: 600px;
     height: 600px;
     border-radius: 50%;
-    filter: blur(150px);
-    opacity: 0.15;
+    filter: blur(160px);
+    opacity: 0.12;
     z-index: -1;
     pointer-events: none;
 }
 
 .bg-glow-1 {
-    background: var(--primary);
+    background: var(--accent);
     top: -200px;
     left: -100px;
 }
 
 .bg-glow-2 {
-    background: var(--accent);
+    background: var(--primary);
     bottom: -200px;
     right: -100px;
 }
@@ -69,24 +71,22 @@ body {
 .app-container {
     max-width: 1400px;
     margin: 0 auto;
-    padding: 2rem 1.5rem;
+    padding: 2.5rem 1.5rem;
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: 2.5rem;
 }
 
-/* Header */
+/* Header / Navbar - Front Desk Style */
 .app-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 1.25rem 2rem;
-    background: var(--bg-card);
-    border: 1px solid var(--border-glass);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    background: #000000;
+    border: 1px solid var(--border-frontdesk);
     border-radius: 16px;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    box-shadow: 0 4px 20px rgba(179, 7, 139, 0.15);
 }
 
 .logo-area {
@@ -106,25 +106,22 @@ body {
     font-weight: 800;
     font-size: 1.75rem;
     letter-spacing: -0.5px;
-    background: linear-gradient(135deg, #fff 40%, var(--primary) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: #ffffff;
 }
 
 .logo-area h1 span {
     font-weight: 400;
-    color: var(--text-muted);
-    -webkit-text-fill-color: var(--text-muted);
+    color: var(--border-frontdesk);
 }
 
 .server-config {
     display: flex;
     align-items: center;
     gap: 0.65rem;
-    background: rgba(255, 255, 255, 0.05);
-    padding: 0.5rem 1rem;
+    background: var(--bg-card-secondary);
+    padding: 0.5rem 1.25rem;
     border-radius: 99px;
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border-frontdesk-subtle);
 }
 
 .pulse-indicator {
@@ -158,25 +155,29 @@ body {
     color: var(--text-main);
 }
 
-/* Cards Design */
+/* Cards Design - Front Desk Interface Style */
+.app-main {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+}
+
 .card {
     background: var(--bg-card);
-    border: 1px solid var(--border-glass);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-radius: 20px;
+    border: 1px solid var(--border-frontdesk);
+    border-radius: 16px;
     padding: 2rem;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
     transition: var(--transition-smooth);
 }
 
 .card:hover {
-    border-color: rgba(255, 255, 255, 0.12);
-    box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4);
+    border-color: var(--border-frontdesk);
+    box-shadow: 0 0 20px rgba(179, 7, 139, 0.25);
 }
 
 .card-header {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.75rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -184,7 +185,7 @@ body {
 
 .card-header h2 {
     font-family: var(--font-heading);
-    font-weight: 600;
+    font-weight: 700;
     font-size: 1.35rem;
     color: #ffffff;
 }
@@ -196,26 +197,26 @@ body {
 }
 
 .badge {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid var(--border-glass);
+    background: rgba(179, 7, 139, 0.15);
+    border: 1px solid var(--border-frontdesk-subtle);
     padding: 0.35rem 0.75rem;
     border-radius: 99px;
     font-size: 0.75rem;
     font-weight: 600;
-    color: var(--text-muted);
+    color: #f472b6;
 }
 
 .badge-accent {
-    background: rgba(217, 70, 239, 0.15);
-    border-color: rgba(217, 70, 239, 0.3);
-    color: #f472b6;
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #ffffff;
 }
 
 /* Search Form */
 .search-form {
     display: flex;
     flex-wrap: wrap;
-    gap: 1.5rem;
+    gap: 1.75rem;
     align-items: flex-end;
 }
 
@@ -254,8 +255,8 @@ body {
 .search-form input[type="text"],
 .search-form select {
     width: 100%;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid var(--border-glass);
+    background: var(--bg-card-secondary);
+    border: 1px solid var(--border-frontdesk-subtle);
     border-radius: 12px;
     padding: 0.85rem 1rem 0.85rem 2.75rem;
     color: var(--text-main);
@@ -270,7 +271,7 @@ body {
     cursor: pointer;
     min-width: 160px;
     appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23a1a1aa'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 1rem center;
     background-size: 1.25rem;
@@ -279,18 +280,19 @@ body {
 
 .search-form input[type="text"]:focus,
 .search-form select:focus {
-    border-color: var(--primary);
-    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--accent);
+    background: #18181b;
     box-shadow: 0 0 0 3px var(--primary-glow);
 }
 
+/* Buttons - Front Desk Interface Style */
 .btn {
-    border: none;
-    border-radius: 12px;
-    padding: 0.9rem 1.75rem;
+    border: 1px solid var(--border-frontdesk);
+    border-radius: 10px;
+    padding: 0.85rem 1.5rem;
     font-family: var(--font-heading);
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -302,35 +304,32 @@ body {
 .btn-primary {
     background: var(--primary);
     color: var(--text-inverse);
-    box-shadow: 0 4px 14px 0 var(--primary-glow);
+    border-color: var(--border-frontdesk);
+    box-shadow: 0 4px 14px var(--primary-glow);
 }
 
 .btn-primary:hover {
     background: var(--primary-hover);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px 0 var(--primary-glow);
-}
-
-.btn-primary:active {
-    transform: translateY(0);
+    border-color: var(--border-frontdesk);
+    box-shadow: 0 0 16px var(--primary-glow);
 }
 
 .btn-secondary {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid var(--border-glass);
+    background: transparent;
+    border: 1px solid var(--border-frontdesk);
     color: var(--text-main);
 }
 
 .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: var(--border-hover);
+    background: var(--primary);
+    color: #ffffff;
 }
 
-/* Layout Grid */
+/* Layout Grid - Generous Panel Spacing */
 .layout-grid {
     display: grid;
-    grid-template-columns: 1.6fr 1fr;
-    gap: 2rem;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 2.5rem;
 }
 
 @media (max-width: 1024px) {
@@ -373,8 +372,8 @@ body {
 .results-grid {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    max-height: 520px;
+    gap: 1.25rem;
+    max-height: 540px;
     overflow-y: auto;
     padding-right: 0.5rem;
 }
@@ -393,13 +392,13 @@ body {
 
 .results-grid::-webkit-scrollbar-thumb,
 .queue-list::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--border-frontdesk-subtle);
     border-radius: 99px;
 }
 
 .results-grid::-webkit-scrollbar-thumb:hover,
 .queue-list::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--accent);
 }
 
 .rom-item {
@@ -407,15 +406,15 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 1rem 1.25rem;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--border-glass);
+    background: var(--bg-card-secondary);
+    border: 1px solid var(--border-frontdesk-subtle);
     border-radius: 12px;
     transition: var(--transition-smooth);
 }
 
 .rom-item:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: var(--border-hover);
+    background: #18181b;
+    border-color: var(--border-frontdesk);
     transform: translateX(4px);
 }
 
@@ -440,8 +439,9 @@ body {
 }
 
 .rom-console-badge {
-    background: rgba(99, 102, 241, 0.12);
-    color: #a5b4fc;
+    background: rgba(179, 7, 139, 0.18);
+    color: #f472b6;
+    border: 1px solid var(--border-frontdesk-subtle);
     padding: 0.15rem 0.5rem;
     border-radius: 6px;
     font-size: 0.75rem;
@@ -458,21 +458,25 @@ body {
 .queue-list {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    max-height: 520px;
+    gap: 1.25rem;
+    max-height: 540px;
     overflow-y: auto;
     padding-right: 0.5rem;
 }
 
 .download-task-card {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--border-glass);
+    background: var(--bg-card-secondary);
+    border: 1px solid var(--border-frontdesk-subtle);
     border-radius: 14px;
     padding: 1.25rem;
     display: flex;
     flex-direction: column;
     gap: 0.85rem;
     transition: var(--transition-smooth);
+}
+
+.download-task-card:hover {
+    border-color: var(--border-frontdesk);
 }
 
 .task-header {
@@ -510,8 +514,9 @@ body {
 }
 
 .status-downloading {
-    background: rgba(99, 102, 241, 0.15);
-    color: #818cf8;
+    background: rgba(179, 7, 139, 0.2);
+    color: #f472b6;
+    border: 1px solid var(--border-frontdesk-subtle);
 }
 
 .status-completed {
@@ -520,8 +525,8 @@ body {
 }
 
 .status-decompressing {
-    background: rgba(217, 70, 239, 0.15);
-    color: #e879f9;
+    background: rgba(179, 7, 139, 0.3);
+    color: #ffffff;
 }
 
 .status-failed {
@@ -539,7 +544,7 @@ body {
 .progress-bar-bg {
     width: 100%;
     height: 6px;
-    background: rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.08);
     border-radius: 99px;
     overflow: hidden;
 }
@@ -595,11 +600,11 @@ body {
 
 .skeleton-card {
     height: 60px;
-    background: linear-gradient(90deg, rgba(255, 255, 255, 0.01) 25%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0.01) 75%);
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.01) 25%, rgba(179, 7, 139, 0.1) 50%, rgba(255, 255, 255, 0.01) 75%);
     background-size: 200% 100%;
     animation: loading 1.5s infinite;
     border-radius: 12px;
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border-frontdesk-subtle);
 }
 
 /* Footer */
@@ -641,21 +646,21 @@ body {
     display: none !important;
 }
 
-/* Storage & ROMs Explorer Styles */
+/* Storage & ROMs Explorer Styles - Front Desk Theme */
 .tab-buttons {
     display: flex;
-    background: rgba(0, 0, 0, 0.25);
+    background: var(--bg-card-secondary);
     padding: 4px;
     border-radius: 12px;
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border-frontdesk-subtle);
     gap: 4px;
 }
 
 .btn-tab {
     background: transparent;
-    border: none;
+    border: 1px solid transparent;
     color: var(--text-muted);
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 1.25rem;
     font-size: 0.85rem;
     font-weight: 500;
     border-radius: 8px;
@@ -668,10 +673,13 @@ body {
 
 .btn-tab:hover {
     color: var(--text-main);
+    background: rgba(179, 7, 139, 0.2);
+    border-color: var(--border-frontdesk-subtle);
 }
 
 .btn-tab.active {
-    background: var(--primary);
+    background: var(--accent);
+    border-color: var(--border-frontdesk);
     color: #ffffff;
     box-shadow: 0 4px 12px var(--primary-glow);
 }
@@ -683,25 +691,25 @@ body {
 }
 
 .folder-path-bar {
-    background: rgba(0, 0, 0, 0.25);
-    border: 1px solid var(--border-glass);
-    padding: 0.65rem 1rem;
+    background: var(--bg-card-secondary);
+    border: 1px solid var(--border-frontdesk-subtle);
+    padding: 0.75rem 1.25rem;
     border-radius: 10px;
     font-size: 0.85rem;
     color: var(--text-muted);
-    margin-bottom: 1.25rem;
+    margin-bottom: 1.5rem;
 }
 
 .folder-path-bar strong {
-    color: var(--primary);
+    color: #f472b6;
     font-family: monospace;
 }
 
 .file-table-wrapper {
     overflow-x: auto;
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border-frontdesk-subtle);
     border-radius: 12px;
-    background: rgba(0, 0, 0, 0.15);
+    background: var(--bg-card-secondary);
 }
 
 .file-table {
@@ -712,16 +720,19 @@ body {
 }
 
 .file-table th {
-    background: rgba(255, 255, 255, 0.04);
-    padding: 0.75rem 1rem;
+    background: #141414;
+    padding: 0.85rem 1.25rem;
     font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
     color: var(--text-muted);
-    border-bottom: 1px solid var(--border-glass);
+    border-bottom: 1px solid var(--border-frontdesk-subtle);
 }
 
 .file-table td {
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid var(--border-glass);
+    padding: 0.85rem 1.25rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     color: var(--text-main);
 }
 
@@ -730,7 +741,7 @@ body {
 }
 
 .file-table tr:hover td {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(179, 7, 139, 0.1);
 }
 
 .file-icon {
@@ -747,11 +758,11 @@ body {
 }
 
 .platform-badge {
-    background: rgba(217, 70, 239, 0.15);
-    color: var(--accent);
-    border: 1px solid rgba(217, 70, 239, 0.3);
+    background: var(--primary);
+    color: #ffffff;
+    border: 1px solid var(--border-frontdesk);
     padding: 0.15rem 0.5rem;
-    border-radius: 4px;
+    border-radius: 6px;
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
