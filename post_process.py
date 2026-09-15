@@ -5,6 +5,9 @@ import shutil
 import zipfile
 import subprocess
 
+def log(msg):
+    print(msg, flush=True)
+
 def get_largest_file_info_in_zip(zip_path):
     try:
         with zipfile.ZipFile(zip_path, 'r') as z:
@@ -19,7 +22,7 @@ def get_largest_file_info_in_zip(zip_path):
             if largest_name:
                 return largest_name, largest_size
     except Exception as e:
-        print(f"Error reading zip {zip_path}: {e}")
+        log(f"  [ZIP-ERROR] Error reading zip {zip_path}: {e}")
     return None, 0
 
 def get_largest_file_info_via_7z(archive_path):
@@ -116,7 +119,7 @@ def get_platform_for_item(item_path, console_name=None):
     else:
         return None
 
-    # Platform Mapping Table
+    # Extension to Platform Mapping
     EXTENSION_MAP = {
         '.sfc': 'snes',
         '.smc': 'snes',
@@ -128,23 +131,36 @@ def get_platform_for_item(item_path, console_name=None):
         '.gba': 'gba',
         '.gbc': 'gbc',
         '.gb': 'gb',
+        '.md': 'megadrive',
+        '.gen': 'megadrive',
+        '.smd': 'megadrive',
+        '.sms': 'mastersystem',
+        '.gg': 'gamegear',
         '.cso': 'psp',
         '.pbp': 'psp',
         '.3ds': '3ds',
         '.cia': '3ds',
-        '.md': 'megadrive',
-        '.gen': 'megadrive',
-        '.smd': 'megadrive',
         '.iso': 'disc_based',
         '.chd': 'disc_based',
         '.rvz': 'disc_based',
         '.gcm': 'gamecube',
         '.wbfs': 'wii',
+        '.bin': 'ambiguous_bin',
     }
 
     platform = EXTENSION_MAP.get(ext)
     c_name = (console_name or "").lower()
     f_name = filename.lower()
+
+    if platform == 'ambiguous_bin':
+        if 'genesis' in c_name or 'mega drive' in c_name or 'megadrive' in c_name or 'sega' in c_name:
+            return 'megadrive'
+        elif 'psx' in c_name or 'ps1' in c_name or 'playstation' in c_name or 'psx' in f_name or 'ps1' in f_name:
+            return 'psx'
+        elif size > 33554432: # > 32MB usually PS1
+            return 'psx'
+        else:
+            return 'megadrive'
 
     if not platform:
         if 'snes' in c_name or 'super nintendo' in c_name:
@@ -165,6 +181,12 @@ def get_platform_for_item(item_path, console_name=None):
             platform = 'nes'
         elif 'genesis' in c_name or 'mega drive' in c_name or 'megadrive' in c_name:
             platform = 'megadrive'
+        elif 'ps2' in c_name or 'playstation 2' in c_name:
+            platform = 'ps2'
+        elif 'psx' in c_name or 'ps1' in c_name or 'playstation' in c_name:
+            platform = 'psx'
+        elif 'psp' in c_name or 'playstation portable' in c_name:
+            platform = 'psp'
         else:
             return None
 
@@ -180,7 +202,6 @@ def get_platform_for_item(item_path, console_name=None):
         elif 'playstation' in c_name or 'psx' in c_name or 'ps1' in c_name or 'playstation' in f_name or 'psx' in f_name or 'ps1' in f_name:
             return 'psx'
         else:
-            # Fallback based on size: PS1 <= 750MB, PS2 > 750MB
             if size > 786432000:
                 return 'ps2'
             else:
@@ -194,7 +215,7 @@ def ensure_dir_and_chown(path):
         try:
             os.chown(path, 1000, 1000)
         except Exception as e:
-            print(f"Warning: chown for {path} failed: {e}")
+            log(f"  [WARN] chown for {path} failed: {e}")
 
 def move_and_chown(src, dest):
     shutil.move(src, dest)
@@ -209,21 +230,31 @@ def move_and_chown(src, dest):
         else:
             os.chown(dest, 1000, 1000)
     except Exception as e:
-        print(f"Warning: chown for {dest} failed: {e}")
+        log(f"  [WARN] chown for {dest} failed: {e}")
+
+def remove_empty_dirs(root_dir):
+    for root, dirs, files in os.walk(root_dir, topdown=False):
+        for d in dirs:
+            dir_path = os.path.join(root, d)
+            try:
+                if not os.listdir(dir_path):
+                    os.rmdir(dir_path)
+                    log(f"  [CLEANUP] Removed empty directory: {dir_path}")
+            except Exception:
+                pass
 
 def trigger_romm_update():
     api_addr = os.environ.get("ROMM_API_ADDR") or os.environ.get("ROMM_URL")
     api_key = os.environ.get("ROMM_API_KEY")
 
     if not api_addr or not api_key:
-        print("ROMM_API_ADDR/ROMM_URL or ROMM_API_KEY environment variables are not set. Skipping library update.")
+        log("[ROMM UPDATE] ROMM_API_ADDR or ROMM_API_KEY env vars not set. Skipping library scan trigger.")
         return
 
     api_addr = api_addr.rstrip('/')
     url = f"{api_addr}/api/tasks/run/scan_library"
 
-    print(f"Triggering RomM library update at {url}...")
-    
+    log(f"[ROMM UPDATE] Triggering RomM library update at {url}...")
     import urllib.request
     import urllib.error
 
@@ -234,13 +265,14 @@ def trigger_romm_update():
         with urllib.request.urlopen(req, data=b'') as response:
             status = response.status
             body = response.read().decode('utf-8')
-            print(f"RomM library update triggered successfully. Status: {status}")
+            log(f"[ROMM UPDATE] Triggered successfully. Status: {status}")
             if body:
-                print(f"Response: {body}")
+                log(f"[ROMM UPDATE] Response: {body}")
     except urllib.error.HTTPError as e:
-        print(f"Failed to trigger RomM library update (HTTP {e.code}): {e.read().decode('utf-8', errors='ignore')}")
+        log(f"[ROMM UPDATE] Failed to trigger (HTTP {e.code}): {e.read().decode('utf-8', errors='ignore')}")
     except Exception as e:
-        print(f"Error triggering RomM library update: {e}")
+        log(f"[ROMM UPDATE] Error: {e}")
+
 def main():
     roms_dir = os.environ.get("ROMS_DIR")
     downloads_dir = os.environ.get("DOWNLOADS_DIR")
@@ -258,15 +290,21 @@ def main():
     
     dest_root = os.path.abspath(dest_root)
     ensure_dir_and_chown(dest_root)
-    print(f"Target ROMs library directory: {dest_root}")
 
-    platform_dirs = {'snes', 'n64', 'nds', 'nes', 'gba', 'gbc', 'gb', 'psx', 'ps2', 'psp', '3ds', 'megadrive', 'gamecube', 'wii'}
+    log("==================================================")
+    log("[ROM ORGANIZER] Starting post-processing organization...")
+    log(f"[CONFIG] Downloads Staging: {downloads_dir}")
+    log(f"[CONFIG] Target ROMs Library: {dest_root}")
+    log("==================================================")
+
+    platform_dirs = {'snes', 'n64', 'nds', 'nes', 'gba', 'gbc', 'gb', 'psx', 'ps2', 'psp', '3ds', 'megadrive', 'mastersystem', 'gamegear', 'gamecube', 'wii'}
 
     # Case 1: Specific path passed as argument
     if len(sys.argv) > 1:
         item_path = sys.argv[1]
         console_name = sys.argv[2] if len(sys.argv) > 2 else None
-        
+        log(f"[MODE] Processing specific item: '{item_path}' (Console Hint: '{console_name}')")
+
         if not os.path.exists(item_path):
             search_dirs = [d for d in [downloads_dir, dest_root] if d and os.path.exists(d)]
             found = False
@@ -277,60 +315,90 @@ def main():
                     found = True
                     break
             if not found:
-                print(f"Error: Path '{item_path}' does not exist.")
+                log(f"[ERROR] Path '{item_path}' does not exist.")
                 sys.exit(1)
 
         item_path = os.path.abspath(item_path)
-        
-        # Don't process if it's already inside a platform subfolder
         parent_dir = os.path.basename(os.path.dirname(item_path))
-        if parent_dir in platform_dirs:
-            print(f"Item '{item_path}' is already inside platform folder '{parent_dir}'.")
+
+        if parent_dir in platform_dirs and os.path.dirname(item_path) != downloads_dir:
+            log(f"[SKIP] Item '{item_path}' is already inside platform folder '{parent_dir}'.")
             sys.exit(0)
 
-        platform = get_platform_for_item(item_path, console_name)
+        platform = get_platform_for_item(item_path, console_name or parent_dir)
         if platform:
             target_dir = os.path.join(dest_root, platform)
             ensure_dir_and_chown(target_dir)
-            
             dest_path = os.path.join(target_dir, os.path.basename(item_path))
-            print(f"Moving '{item_path}' to '{dest_path}'...")
+            log(f"[MOVE] Moving '{item_path}' -> '{dest_path}'")
             move_and_chown(item_path, dest_path)
             trigger_romm_update()
         else:
-            print(f"No platform matched for item: '{item_path}'")
-    
-    # Case 2: Scan directories for loose files
-    else:
-        scan_dirs = []
-        if downloads_dir and os.path.isdir(downloads_dir):
-            scan_dirs.append(os.path.abspath(downloads_dir))
-        if dest_root not in scan_dirs and os.path.isdir(dest_root):
-            scan_dirs.append(dest_root)
+            log(f"[WARN] No platform matched for item: '{item_path}'")
 
-        moved_any = False
-        for s_dir in scan_dirs:
-            print(f"Scanning '{s_dir}' for loose ROMs/games...")
-            for item in os.listdir(s_dir):
-                if item.startswith('.') or item in ('post_process.py', 'post_process.sh'):
-                    continue
-                if item in platform_dirs or item == 'roms':
-                    continue
+    # Case 2: Full scan of downloads staging & loose files
+    else:
+        log("[MODE] Running full directory scan...")
+        moved_count = 0
+
+        # Sub-case 2a: Scan downloads_dir recursively
+        if downloads_dir and os.path.isdir(downloads_dir):
+            abs_downloads = os.path.abspath(downloads_dir)
+            log(f"[SCAN] Walking downloads directory: '{abs_downloads}'")
+
+            for root, dirs, files in os.walk(abs_downloads):
+                dirs[:] = [d for d in dirs if not d.startswith('.')]
                 
-                item_path = os.path.join(s_dir, item)
+                for file_name in files:
+                    if file_name.startswith('.') or file_name in ('post_process.py', 'post_process.sh', 'readme.html', 'readme.txt', 'readme.md'):
+                        continue
+                    
+                    file_ext = os.path.splitext(file_name)[1].lower()
+                    if file_ext in ('.html', '.txt', '.nfo', '.jpg', '.png', '.jpeg', '.svg', '.db'):
+                        continue
+
+                    full_path = os.path.join(root, file_name)
+                    
+                    rel_dir = os.path.relpath(root, abs_downloads)
+                    parent_hint = None
+                    if rel_dir != '.':
+                        parent_hint = rel_dir.split(os.sep)[0]
+
+                    platform = get_platform_for_item(full_path, console_name=parent_hint)
+                    if platform:
+                        target_dir = os.path.join(dest_root, platform)
+                        ensure_dir_and_chown(target_dir)
+                        dest_path = os.path.join(target_dir, file_name)
+                        log(f"[MOVE] '{full_path}' -> '{dest_path}' (Platform: {platform})")
+                        move_and_chown(full_path, dest_path)
+                        moved_count += 1
+                    else:
+                        log(f"[SKIP] Could not map loose file '{full_path}' to any platform.")
+
+            remove_empty_dirs(abs_downloads)
+
+        # Sub-case 2b: Scan root of dest_root for loose files
+        if os.path.isdir(dest_root):
+            log(f"[SCAN] Checking root of ROMs directory for unorganized files: '{dest_root}'")
+            for item in os.listdir(dest_root):
+                if item.startswith('.') or item in ('post_process.py', 'post_process.sh', 'roms'):
+                    continue
+                if item in platform_dirs:
+                    continue
+
+                item_path = os.path.join(dest_root, item)
                 platform = get_platform_for_item(item_path)
                 if platform:
                     target_dir = os.path.join(dest_root, platform)
                     ensure_dir_and_chown(target_dir)
-                    
                     dest_path = os.path.join(target_dir, item)
-                    print(f"Moving loose item '{item}' to '{dest_path}'...")
+                    log(f"[MOVE] Loose root item '{item_path}' -> '{dest_path}' (Platform: {platform})")
                     move_and_chown(item_path, dest_path)
-                    moved_any = True
-                else:
-                    print(f"Could not map loose item '{item}' to any platform.")
-        
-        if moved_any:
+                    moved_count += 1
+
+        log(f"[SUMMARY] Total files moved and organized: {moved_count}")
+        log("==================================================")
+        if moved_count > 0:
             trigger_romm_update()
 
 if __name__ == '__main__':

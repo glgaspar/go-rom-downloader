@@ -138,8 +138,9 @@ func handleOrganize(w http.ResponseWriter, r *http.Request) {
 	cmd.Env = env
 
 	output, err := cmd.CombinedOutput()
+	log.Printf("[ORGANIZATION TERMINAL OUTPUT]\n%s", string(output))
+
 	if err != nil {
-		log.Printf("Manual organization failed: %v, Output: %s", err, string(output))
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{

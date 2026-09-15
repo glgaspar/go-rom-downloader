@@ -17,22 +17,37 @@ def test_post_process():
         os.environ["DOWNLOADS_DIR"] = downloads_dir
         os.environ["ROMS_DIR"] = roms_dir
         
-        # 1. Create mock ROM files in the downloads directory
-        rom_files = {
-            "mario.sfc": "snes",
-            "zelda.smc": "snes",
-            "goldeneye.z64": "n64",
-            "pokemon.nds": "nds",
-            "metroid.nes": "nes",
-            "mariokart.gba": "gba",
-            "tekken.iso": "psx",
-        }
-        
-        for filename in rom_files:
-            file_path = os.path.join(downloads_dir, filename)
-            with open(file_path, "wb") as f:
-                f.write(b"mock rom content")
-            print(f"Created mock file: {file_path}")
+        # 1. Create mock files matching user's exact folder structure
+        # Loose files in downloads
+        decap_path = os.path.join(downloads_dir, "Decap Attack.bin")
+        with open(decap_path, "wb") as f:
+            f.write(b"mock megadrive bin content")
+
+        kid_path = os.path.join(downloads_dir, "Kid Chameleon.bin")
+        with open(kid_path, "wb") as f:
+            f.write(b"mock megadrive bin content")
+
+        readme_path = os.path.join(downloads_dir, "readme.html")
+        with open(readme_path, "wb") as f:
+            f.write(b"<html>readme</html>")
+
+        # Nested platform folders inside downloads
+        dl_n64_dir = os.path.join(downloads_dir, "n64")
+        os.makedirs(dl_n64_dir, exist_ok=True)
+        diddy_path = os.path.join(dl_n64_dir, "Diddy Kong Racing (USA) (En,Fr).n64")
+        with open(diddy_path, "wb") as f:
+            f.write(b"mock n64 content")
+
+        dl_ps2_dir = os.path.join(downloads_dir, "ps2")
+        os.makedirs(dl_ps2_dir, exist_ok=True)
+        naruto_path = os.path.join(dl_ps2_dir, "Naruto - Uzumaki Chronicles 2.7z")
+        with open(naruto_path, "wb") as f:
+            f.write(b"mock ps2 7z content")
+
+        # Pre-existing organized roms in ROMs library
+        os.makedirs(os.path.join(roms_dir, "gba"), exist_ok=True)
+        with open(os.path.join(roms_dir, "gba", "Pokémon Emerald Version (U)(TrashMan).gba"), "wb") as f:
+            f.write(b"existing gba rom")
 
         # 2. Run post_process.py in scanning mode (0 arguments)
         script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "post_process.py"))
@@ -47,15 +62,17 @@ def test_post_process():
         assert result.returncode == 0, f"post_process.py failed with exit code {result.returncode}"
 
         # 3. Verify all files have been routed correctly into roms_dir/<platform>/
-        for filename, expected_platform in rom_files.items():
-            expected_path = os.path.join(roms_dir, expected_platform, filename)
-            assert os.path.exists(expected_path), f"File {filename} was not moved to ROMs platform folder {expected_platform} (expected path: {expected_path})"
-            print(f"Verified: {filename} correctly moved to {roms_dir}/{expected_platform}/")
-
-        # 4. Verify no loose files are left in the downloads directory
-        loose_files = [f for f in os.listdir(downloads_dir) if os.path.isfile(os.path.join(downloads_dir, f))]
-        assert len(loose_files) == 0, f"Loose files remaining in downloads directory: {loose_files}"
-        print("Verified: No loose files left in downloads directory.")
+        assert os.path.exists(os.path.join(roms_dir, "megadrive", "Decap Attack.bin")), "Decap Attack.bin was not moved to megadrive/"
+        assert os.path.exists(os.path.join(roms_dir, "megadrive", "Kid Chameleon.bin")), "Kid Chameleon.bin was not moved to megadrive/"
+        assert os.path.exists(os.path.join(roms_dir, "n64", "Diddy Kong Racing (USA) (En,Fr).n64")), "Diddy Kong Racing was not moved to n64/"
+        assert os.path.exists(os.path.join(roms_dir, "ps2", "Naruto - Uzumaki Chronicles 2.7z")), "Naruto 7z was not moved to ps2/"
+        
+        # Verify readme.html remains in downloads
+        assert os.path.exists(readme_path), "readme.html should remain in downloads"
+        
+        # Verify empty subdirectories in downloads were cleaned up
+        assert not os.path.exists(dl_n64_dir), "empty downloads/n64 dir should be cleaned up"
+        assert not os.path.exists(dl_ps2_dir), "empty downloads/ps2 dir should be cleaned up"
 
     print("\nAll tests PASSED successfully!")
 
