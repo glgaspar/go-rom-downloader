@@ -640,3 +640,120 @@ body {
 .hidden {
     display: none !important;
 }
+
+/* Storage & ROMs Explorer Styles */
+.tab-buttons {
+    display: flex;
+    background: rgba(0, 0, 0, 0.25);
+    padding: 4px;
+    border-radius: 12px;
+    border: 1px solid var(--border-glass);
+    gap: 4px;
+}
+
+.btn-tab {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: var(--transition-smooth);
+}
+
+.btn-tab:hover {
+    color: var(--text-main);
+}
+
+.btn-tab.active {
+    background: var(--primary);
+    color: #ffffff;
+    box-shadow: 0 4px 12px var(--primary-glow);
+}
+
+.btn-icon-only {
+    padding: 0.5rem 0.75rem;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.folder-path-bar {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--border-glass);
+    padding: 0.65rem 1rem;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 1.25rem;
+}
+
+.folder-path-bar strong {
+    color: var(--primary);
+    font-family: monospace;
+}
+
+.file-table-wrapper {
+    overflow-x: auto;
+    border: 1px solid var(--border-glass);
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.15);
+}
+
+.file-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.9rem;
+}
+
+.file-table th {
+    background: rgba(255, 255, 255, 0.04);
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border-glass);
+}
+
+.file-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border-glass);
+    color: var(--text-main);
+}
+
+.file-table tr:last-child td {
+    border-bottom: none;
+}
+
+.file-table tr:hover td {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.file-icon {
+    margin-right: 0.5rem;
+}
+
+.path-code {
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+}
+
+.platform-badge {
+    background: rgba(217, 70, 239, 0.15);
+    color: var(--accent);
+    border: 1px solid rgba(217, 70, 239, 0.3);
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-right: 0.5rem;
+}

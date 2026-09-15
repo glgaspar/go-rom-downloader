@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"time"
 
 	"github.com/alcmoraes/go-rom-downloader/sources"
@@ -109,6 +110,7 @@ func handleConfig(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
 		"downloadsDir": downloadsDir,
+		"romsDir":      romsDir,
 		"port":         serverPort,
 	})
 }
@@ -119,7 +121,7 @@ func handleOrganize(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Run post-processing script with no arguments to scan downloadsDir
+	// Run post-processing script with no arguments to scan downloadsDir and romsDir
 	scriptPath := "/app/post_process.py"
 	if _, err := os.Stat(scriptPath); os.IsNotExist(err) {
 		scriptPath = "./post_process.py"
@@ -130,7 +132,10 @@ func handleOrganize(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cmd := exec.Command("python3", scriptPath)
-	cmd.Env = os.Environ()
+	env := os.Environ()
+	env = append(env, fmt.Sprintf("DOWNLOADS_DIR=%s", downloadsDir))
+	env = append(env, fmt.Sprintf("ROMS_DIR=%s", romsDir))
+	cmd.Env = env
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
@@ -150,6 +155,75 @@ func handleOrganize(w http.ResponseWriter, r *http.Request) {
 		"status":  "success",
 		"message": "Loose files organized successfully.",
 		"output":  string(output),
+	})
+}
+
+type FileItem struct {
+	Name    string `json:"name"`
+	Path    string `json:"path"`
+	Size    int64  `json:"size"`
+	IsDir   bool   `json:"isDir"`
+	ModTime string `json:"modTime"`
+}
+
+type FilesResponse struct {
+	DownloadsDir string     `json:"downloadsDir"`
+	RomsDir      string     `json:"romsDir"`
+	Downloads    []FileItem `json:"downloads"`
+	Roms         []FileItem `json:"roms"`
+}
+
+func listFolderFiles(dirPath string) []FileItem {
+	items := make([]FileItem, 0)
+	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
+		return items
+	}
+
+	err := filepath.WalkDir(dirPath, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return nil
+		}
+		if path == dirPath {
+			return nil
+		}
+
+		relPath, err := filepath.Rel(dirPath, path)
+		if err != nil {
+			relPath = path
+		}
+
+		info, err := d.Info()
+		if err != nil {
+			return nil
+		}
+
+		items = append(items, FileItem{
+			Name:    d.Name(),
+			Path:    relPath,
+			Size:    info.Size(),
+			IsDir:   d.IsDir(),
+			ModTime: info.ModTime().Format("2006-01-02 15:04:05"),
+		})
+		return nil
+	})
+
+	if err != nil {
+		log.Printf("Error walking directory %s: %v", dirPath, err)
+	}
+
+	return items
+}
+
+func handleFiles(w http.ResponseWriter, r *http.Request) {
+	downloadsList := listFolderFiles(downloadsDir)
+	romsList := listFolderFiles(romsDir)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(FilesResponse{
+		DownloadsDir: downloadsDir,
+		RomsDir:      romsDir,
+		Downloads:    downloadsList,
+		Roms:         romsList,
 	})
 }
 
@@ -183,11 +257,13 @@ func runWebServer(port string) {
 	mux.HandleFunc("GET /api/downloads", handleDownloads)
 	mux.HandleFunc("GET /api/config", handleConfig)
 	mux.HandleFunc("POST /api/organize", handleOrganize)
+	mux.HandleFunc("GET /api/files", handleFiles)
 
 	addr := ":" + port
 	log.Printf("== GO ROM DOWNLOADER WEB SERVER ==")
 	log.Printf("Listening on %s", addr)
 	log.Printf("Downloads directory: %s", downloadsDir)
+	log.Printf("ROMs directory: %s", romsDir)
 	log.Printf("Open http://localhost:%s in your browser", port)
 
 	if err := http.ListenAndServe(addr, mux); err != nil {

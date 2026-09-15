@@ -100,6 +100,85 @@
                     </div>
                 </section>
             </div>
+
+            <!-- Storage & ROMs Explorer Section -->
+            <section class="card files-card">
+                <div class="card-header">
+                    <div>
+                        <h2>Storage Explorer</h2>
+                        <p class="subtitle">Inspect files in Staging Downloads and Organized RomM Library</p>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <div class="tab-buttons">
+                            <button id="tab-downloads-btn" class="btn btn-tab active">
+                                <span>Downloads</span>
+                                <span class="badge" id="downloads-count-badge">0</span>
+                            </button>
+                            <button id="tab-roms-btn" class="btn btn-tab">
+                                <span>ROMs Library</span>
+                                <span class="badge badge-accent" id="roms-count-badge">0</span>
+                            </button>
+                        </div>
+                        <button id="refresh-files-btn" class="btn btn-secondary btn-icon-only" title="Refresh files list">
+                            🔄
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Downloads View -->
+                <div id="downloads-files-view" class="files-view">
+                    <div class="folder-path-bar">
+                        📂 <span>Downloads Staging Directory:</span> <strong id="downloads-path-display">./downloads</strong>
+                    </div>
+                    <div id="downloads-empty" class="empty-state">
+                        <span class="empty-icon">📂</span>
+                        <h3>No Files in Downloads Staging</h3>
+                        <p>Active downloads and extracted files will appear here before organization.</p>
+                    </div>
+                    <div id="downloads-file-table" class="file-table-wrapper hidden">
+                        <table class="file-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Path</th>
+                                    <th>Size</th>
+                                    <th>Modified</th>
+                                </tr>
+                            </thead>
+                            <tbody id="downloads-file-list">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ROMs View -->
+                <div id="roms-files-view" class="files-view hidden">
+                    <div class="folder-path-bar">
+                        👾 <span>RomM Library Directory:</span> <strong id="roms-path-display">./roms</strong>
+                    </div>
+                    <div id="roms-empty" class="empty-state">
+                        <span class="empty-icon">🕹️</span>
+                        <h3>No Organized ROMs Yet</h3>
+                        <p>Downloaded games will be mapped into platform folders (e.g. snes/, n64/) in RomM style.</p>
+                    </div>
+                    <div id="roms-file-table" class="file-table-wrapper hidden">
+                        <table class="file-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Platform / Path</th>
+                                    <th>Size</th>
+                                    <th>Modified</th>
+                                </tr>
+                            </thead>
+                            <tbody id="roms-file-list">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
         </main>
 
         <footer class="app-footer">

@@ -35,6 +35,7 @@ var (
 	downloads    = make([]*DownloadTask, 0)
 	downloadsMu  sync.RWMutex
 	downloadsDir = "./downloads"
+	romsDir      = "./roms"
 	serverPort   = "8080"
 )
 
@@ -195,8 +196,11 @@ func runPostProcessing(filePath string, consoleName string) {
 	log.Printf("Executing post-processing script %s for file %s with console %s", scriptPath, absPath, consoleName)
 	cmd := exec.Command("python3", scriptPath, absPath, consoleName)
 	
-	// Inherit system environment variables
-	cmd.Env = os.Environ()
+	// Inherit system environment variables and pass DOWNLOADS_DIR and ROMS_DIR
+	env := os.Environ()
+	env = append(env, fmt.Sprintf("DOWNLOADS_DIR=%s", downloadsDir))
+	env = append(env, fmt.Sprintf("ROMS_DIR=%s", romsDir))
+	cmd.Env = env
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {

@@ -122,22 +122,61 @@ def get_platform_for_item(item_path, console_name=None):
         '.smc': 'snes',
         '.n64': 'n64',
         '.z64': 'n64',
+        '.v64': 'n64',
         '.nds': 'nds',
         '.nes': 'nes',
         '.gba': 'gba',
-        '.iso': 'ps1_or_ps2',
-        '.chd': 'ps1_or_ps2',
+        '.gbc': 'gbc',
+        '.gb': 'gb',
+        '.cso': 'psp',
+        '.pbp': 'psp',
+        '.3ds': '3ds',
+        '.cia': '3ds',
+        '.md': 'megadrive',
+        '.gen': 'megadrive',
+        '.smd': 'megadrive',
+        '.iso': 'disc_based',
+        '.chd': 'disc_based',
+        '.rvz': 'disc_based',
+        '.gcm': 'gamecube',
+        '.wbfs': 'wii',
     }
 
     platform = EXTENSION_MAP.get(ext)
-    if not platform:
-        return None
+    c_name = (console_name or "").lower()
+    f_name = filename.lower()
 
-    if platform == 'ps1_or_ps2':
-        c_name = (console_name or "").lower()
-        f_name = filename.lower()
+    if not platform:
+        if 'snes' in c_name or 'super nintendo' in c_name:
+            platform = 'snes'
+        elif 'nintendo 64' in c_name or 'n64' in c_name:
+            platform = 'n64'
+        elif 'game boy advance' in c_name or 'gba' in c_name:
+            platform = 'gba'
+        elif 'game boy color' in c_name or 'gbc' in c_name:
+            platform = 'gbc'
+        elif 'game boy' in c_name:
+            platform = 'gb'
+        elif 'nintendo ds' in c_name or 'nds' in c_name:
+            platform = 'nds'
+        elif 'nintendo 3ds' in c_name or '3ds' in c_name:
+            platform = '3ds'
+        elif 'nes' in c_name or 'nintendo entertainment system' in c_name:
+            platform = 'nes'
+        elif 'genesis' in c_name or 'mega drive' in c_name or 'megadrive' in c_name:
+            platform = 'megadrive'
+        else:
+            return None
+
+    if platform == 'disc_based':
         if 'playstation 2' in c_name or 'ps2' in c_name or 'playstation 2' in f_name or 'ps2' in f_name:
             return 'ps2'
+        elif 'psp' in c_name or 'playstation portable' in c_name or 'psp' in f_name:
+            return 'psp'
+        elif 'gamecube' in c_name or 'ngc' in c_name or 'gamecube' in f_name:
+            return 'gamecube'
+        elif 'wii' in c_name or 'wii' in f_name:
+            return 'wii'
         elif 'playstation' in c_name or 'psx' in c_name or 'ps1' in c_name or 'playstation' in f_name or 'psx' in f_name or 'ps1' in f_name:
             return 'psx'
         else:
@@ -203,18 +242,25 @@ def trigger_romm_update():
     except Exception as e:
         print(f"Error triggering RomM library update: {e}")
 def main():
-    dest_root = os.environ.get("DOWNLOADS_DIR")
-    if not dest_root:
+    roms_dir = os.environ.get("ROMS_DIR")
+    downloads_dir = os.environ.get("DOWNLOADS_DIR")
+
+    if roms_dir:
+        dest_root = roms_dir
+    elif downloads_dir and os.path.isdir(os.path.join(downloads_dir, "roms")):
+        dest_root = os.path.join(downloads_dir, "roms")
+    elif downloads_dir:
+        dest_root = downloads_dir
+    elif os.path.exists("/mnt/games/Roms"):
         dest_root = "/mnt/games/Roms"
-        if not os.path.exists(dest_root):
-            dest_root = "./downloads"
+    else:
+        dest_root = "./roms"
     
     dest_root = os.path.abspath(dest_root)
-    # Auto-detect if using RomM's recommended nested 'roms/' directory structure
-    roms_sub = os.path.join(dest_root, "roms")
-    if os.path.isdir(roms_sub):
-        dest_root = roms_sub
-    print(f"Completed download payload directory: {dest_root}")
+    ensure_dir_and_chown(dest_root)
+    print(f"Target ROMs library directory: {dest_root}")
+
+    platform_dirs = {'snes', 'n64', 'nds', 'nes', 'gba', 'gbc', 'gb', 'psx', 'ps2', 'psp', '3ds', 'megadrive', 'gamecube', 'wii'}
 
     # Case 1: Specific path passed as argument
     if len(sys.argv) > 1:
@@ -222,11 +268,15 @@ def main():
         console_name = sys.argv[2] if len(sys.argv) > 2 else None
         
         if not os.path.exists(item_path):
-            # Try to resolve relative to dest_root
-            alternative_path = os.path.join(dest_root, os.path.basename(item_path))
-            if os.path.exists(alternative_path):
-                item_path = alternative_path
-            else:
+            search_dirs = [d for d in [downloads_dir, dest_root] if d and os.path.exists(d)]
+            found = False
+            for d in search_dirs:
+                alternative_path = os.path.join(d, os.path.basename(item_path))
+                if os.path.exists(alternative_path):
+                    item_path = alternative_path
+                    found = True
+                    break
+            if not found:
                 print(f"Error: Path '{item_path}' does not exist.")
                 sys.exit(1)
 
@@ -234,7 +284,6 @@ def main():
         
         # Don't process if it's already inside a platform subfolder
         parent_dir = os.path.basename(os.path.dirname(item_path))
-        platform_dirs = {'snes', 'n64', 'nds', 'nes', 'gba', 'psx', 'ps2'}
         if parent_dir in platform_dirs:
             print(f"Item '{item_path}' is already inside platform folder '{parent_dir}'.")
             sys.exit(0)
@@ -251,30 +300,35 @@ def main():
         else:
             print(f"No platform matched for item: '{item_path}'")
     
-    # Case 2: Scan the destination directory for loose files
+    # Case 2: Scan directories for loose files
     else:
-        print(f"Scanning '{dest_root}' for loose ROMs/games...")
-        platform_dirs = {'snes', 'n64', 'nds', 'nes', 'gba', 'psx', 'ps2'}
+        scan_dirs = []
+        if downloads_dir and os.path.isdir(downloads_dir):
+            scan_dirs.append(os.path.abspath(downloads_dir))
+        if dest_root not in scan_dirs and os.path.isdir(dest_root):
+            scan_dirs.append(dest_root)
+
         moved_any = False
-        
-        for item in os.listdir(dest_root):
-            if item.startswith('.') or item in ('post_process.py', 'post_process.sh'):
-                continue
-            if item in platform_dirs:
-                continue
-            
-            item_path = os.path.join(dest_root, item)
-            platform = get_platform_for_item(item_path)
-            if platform:
-                target_dir = os.path.join(dest_root, platform)
-                ensure_dir_and_chown(target_dir)
+        for s_dir in scan_dirs:
+            print(f"Scanning '{s_dir}' for loose ROMs/games...")
+            for item in os.listdir(s_dir):
+                if item.startswith('.') or item in ('post_process.py', 'post_process.sh'):
+                    continue
+                if item in platform_dirs or item == 'roms':
+                    continue
                 
-                dest_path = os.path.join(target_dir, item)
-                print(f"Moving loose item '{item}' to '{dest_path}'...")
-                move_and_chown(item_path, dest_path)
-                moved_any = True
-            else:
-                print(f"Could not map loose item '{item}' to any platform.")
+                item_path = os.path.join(s_dir, item)
+                platform = get_platform_for_item(item_path)
+                if platform:
+                    target_dir = os.path.join(dest_root, platform)
+                    ensure_dir_and_chown(target_dir)
+                    
+                    dest_path = os.path.join(target_dir, item)
+                    print(f"Moving loose item '{item}' to '{dest_path}'...")
+                    move_and_chown(item_path, dest_path)
+                    moved_any = True
+                else:
+                    print(f"Could not map loose item '{item}' to any platform.")
         
         if moved_any:
             trigger_romm_update()

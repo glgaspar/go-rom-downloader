@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await fetch('/api/config');
             if (res.ok) {
                 const config = await res.json();
-                serverConfig.querySelector('.config-text').innerHTML = `Downloads folder: <strong>${config.downloadsDir}</strong>`;
+                serverConfig.querySelector('.config-text').innerHTML = `Downloads: <strong>${escapeHtml(config.downloadsDir)}</strong> &bull; ROMs: <strong>${escapeHtml(config.romsDir)}</strong>`;
             }
         } catch (err) {
             console.error('Error fetching config:', err);
@@ -386,6 +386,125 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 4000);
     }
 
+    // Storage Explorer DOM elements
+    const tabDownloadsBtn = document.getElementById('tab-downloads-btn');
+    const tabRomsBtn = document.getElementById('tab-roms-btn');
+    const downloadsFilesView = document.getElementById('downloads-files-view');
+    const romsFilesView = document.getElementById('roms-files-view');
+    const downloadsCountBadge = document.getElementById('downloads-count-badge');
+    const romsCountBadge = document.getElementById('roms-count-badge');
+    const downloadsPathDisplay = document.getElementById('downloads-path-display');
+    const romsPathDisplay = document.getElementById('roms-path-display');
+    const downloadsEmpty = document.getElementById('downloads-empty');
+    const romsEmpty = document.getElementById('roms-empty');
+    const downloadsFileTable = document.getElementById('downloads-file-table');
+    const romsFileTable = document.getElementById('roms-file-table');
+    const downloadsFileList = document.getElementById('downloads-file-list');
+    const romsFileList = document.getElementById('roms-file-list');
+    const refreshFilesBtn = document.getElementById('refresh-files-btn');
+
+    // Initial fetch of files list
+    fetchFiles();
+
+    // Tab switching for Storage Explorer
+    if (tabDownloadsBtn && tabRomsBtn) {
+        tabDownloadsBtn.addEventListener('click', () => {
+            tabDownloadsBtn.classList.add('active');
+            tabRomsBtn.classList.remove('active');
+            downloadsFilesView.classList.remove('hidden');
+            romsFilesView.classList.add('hidden');
+        });
+
+        tabRomsBtn.addEventListener('click', () => {
+            tabRomsBtn.classList.add('active');
+            tabDownloadsBtn.classList.remove('active');
+            romsFilesView.classList.remove('hidden');
+            downloadsFilesView.classList.add('hidden');
+        });
+    }
+
+    if (refreshFilesBtn) {
+        refreshFilesBtn.addEventListener('click', () => {
+            fetchFiles();
+        });
+    }
+
+    async function fetchFiles() {
+        try {
+            const res = await fetch('/api/files');
+            if (res.ok) {
+                const data = await res.json();
+                renderFiles(data);
+            }
+        } catch (err) {
+            console.error('Error fetching files list:', err);
+        }
+    }
+
+    function renderFiles(data) {
+        if (!data) return;
+
+        if (downloadsPathDisplay) downloadsPathDisplay.textContent = data.downloadsDir || './downloads';
+        if (romsPathDisplay) romsPathDisplay.textContent = data.romsDir || './roms';
+
+        const downloads = data.downloads || [];
+        const roms = data.roms || [];
+
+        if (downloadsCountBadge) downloadsCountBadge.textContent = downloads.length;
+        if (romsCountBadge) romsCountBadge.textContent = roms.length;
+
+        // Render Downloads
+        if (downloadsFileList) {
+            if (downloads.length === 0) {
+                downloadsEmpty.classList.remove('hidden');
+                downloadsFileTable.classList.add('hidden');
+            } else {
+                downloadsEmpty.classList.add('hidden');
+                downloadsFileTable.classList.remove('hidden');
+                downloadsFileList.innerHTML = downloads.map(item => {
+                    const icon = item.isDir ? '📁' : '📄';
+                    return `
+                        <tr>
+                            <td>${icon} <strong>${escapeHtml(item.name)}</strong></td>
+                            <td><span class="path-code">${escapeHtml(item.path)}</span></td>
+                            <td>${item.isDir ? '-' : formatBytes(item.size)}</td>
+                            <td>${escapeHtml(item.modTime)}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        }
+
+        // Render ROMs
+        if (romsFileList) {
+            if (roms.length === 0) {
+                romsEmpty.classList.remove('hidden');
+                romsFileTable.classList.add('hidden');
+            } else {
+                romsEmpty.classList.add('hidden');
+                romsFileTable.classList.remove('hidden');
+                
+                romsFileList.innerHTML = roms.map(item => {
+                    const icon = item.isDir ? '📁' : '🎮';
+                    const parts = item.path.split('/');
+                    let platformBadge = '';
+                    if (parts.length > 1) {
+                        platformBadge = `<span class="platform-badge">${escapeHtml(parts[0])}</span>`;
+                    }
+
+                    return `
+                        <tr>
+                            <td>${icon} <strong>${escapeHtml(item.name)}</strong></td>
+                            <td>${platformBadge}<span class="path-code">${escapeHtml(item.path)}</span></td>
+                            <td>${item.isDir ? '-' : formatBytes(item.size)}</td>
+                            <td>${escapeHtml(item.modTime)}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        }
+    }
+
     // Handle "Organize Loose ROMs" Button Click
     if (organizeBtn) {
         organizeBtn.addEventListener('click', async () => {
@@ -396,6 +515,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await res.json();
                 if (res.ok) {
                     showToast(data.message || 'Loose files organized successfully!', 'success');
+                    fetchFiles();
                 } else {
                     showToast(data.error || 'Failed to organize files', 'danger');
                 }
