@@ -325,6 +325,21 @@ body {
     color: #ffffff;
 }
 
+.btn-cancel {
+    background: transparent;
+    border: 1px solid var(--border-frontdesk);
+    color: #f87171;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.8rem;
+    border-radius: 8px;
+}
+
+.btn-cancel:hover {
+    background: #991b1b;
+    border-color: #ef4444;
+    color: #ffffff;
+}
+
 /* Layout Grid - Generous Panel Spacing */
 .layout-grid {
     display: grid;

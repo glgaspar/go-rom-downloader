@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/alcmoraes/go-rom-downloader/sources"
@@ -228,6 +229,63 @@ func handleFiles(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+type DeleteFileReq struct {
+	Path string `json:"path"`
+}
+
+func handleDeleteFile(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete && r.Method != http.MethodPost {
+		http.Error(w, `{"error":"Method not allowed"}`, http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req DeleteFileReq
+	if r.Method == http.MethodDelete {
+		req.Path = r.URL.Query().Get("path")
+	}
+	if req.Path == "" && r.Body != nil {
+		_ = json.NewDecoder(r.Body).Decode(&req)
+	}
+
+	if req.Path == "" {
+		http.Error(w, `{"error":"path parameter is required"}`, http.StatusBadRequest)
+		return
+	}
+
+	absDownloads, err := filepath.Abs(downloadsDir)
+	if err != nil {
+		absDownloads = downloadsDir
+	}
+
+	targetPath := filepath.Clean(filepath.Join(absDownloads, req.Path))
+
+	rel, err := filepath.Rel(absDownloads, targetPath)
+	if err != nil || strings.HasPrefix(rel, "..") || rel == "." || targetPath == absDownloads {
+		http.Error(w, `{"error":"Invalid path or access denied outside downloads directory"}`, http.StatusBadRequest)
+		return
+	}
+
+	if _, err := os.Stat(targetPath); os.IsNotExist(err) {
+		http.Error(w, `{"error":"File does not exist"}`, http.StatusNotFound)
+		return
+	}
+
+	log.Printf("[FILE DELETE] Removing file/folder: %s", targetPath)
+	if err := os.RemoveAll(targetPath); err != nil {
+		log.Printf("[FILE DELETE FAILED] Error removing %s: %v", targetPath, err)
+		http.Error(w, fmt.Sprintf(`{"error":"Failed to delete file: %v"}`, err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{
+		"status":  "success",
+		"message": "File deleted successfully",
+		"path":    req.Path,
+	})
+}
+
 // runWebServer bootstraps the net/http multiplexer and starts listening.
 func runWebServer(port string) {
 	mux := http.NewServeMux()
@@ -259,6 +317,8 @@ func runWebServer(port string) {
 	mux.HandleFunc("GET /api/config", handleConfig)
 	mux.HandleFunc("POST /api/organize", handleOrganize)
 	mux.HandleFunc("GET /api/files", handleFiles)
+	mux.HandleFunc("DELETE /api/files", handleDeleteFile)
+	mux.HandleFunc("POST /api/files/delete", handleDeleteFile)
 
 	addr := ":" + port
 	log.Printf("== GO ROM DOWNLOADER WEB SERVER ==")

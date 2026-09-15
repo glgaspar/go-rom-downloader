@@ -463,15 +463,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 downloadsFileTable.classList.remove('hidden');
                 downloadsFileList.innerHTML = downloads.map(item => {
                     const icon = item.isDir ? '📁' : '📄';
+                    const escPath = escapeHtml(item.path);
                     return `
                         <tr>
                             <td>${icon} <strong>${escapeHtml(item.name)}</strong></td>
-                            <td><span class="path-code">${escapeHtml(item.path)}</span></td>
+                            <td><span class="path-code">${escPath}</span></td>
                             <td>${item.isDir ? '-' : formatBytes(item.size)}</td>
                             <td>${escapeHtml(item.modTime)}</td>
+                            <td style="text-align: right;">
+                                <button class="btn btn-cancel btn-delete-file" data-path="${escPath}">
+                                    🗑️ Delete
+                                </button>
+                            </td>
                         </tr>
                     `;
                 }).join('');
+
+                // Attach click listeners to delete buttons
+                document.querySelectorAll('.btn-delete-file').forEach(btn => {
+                    btn.addEventListener('click', handleDeleteFileClick);
+                });
             }
         }
 
@@ -502,6 +513,40 @@ document.addEventListener('DOMContentLoaded', () => {
                     `;
                 }).join('');
             }
+        }
+    }
+
+    // Handle Deleting File from Downloads Staging
+    async function handleDeleteFileClick(e) {
+        const btn = e.currentTarget;
+        const path = btn.dataset.path;
+        if (!path) return;
+
+        if (!confirm(`Are you sure you want to delete "${path}" from Downloads staging?`)) {
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Deleting...';
+
+        try {
+            const res = await fetch(`/api/files/delete?path=${encodeURIComponent(path)}`, {
+                method: 'DELETE'
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok) {
+                showToast(`Deleted "${path}" successfully`, 'success');
+                fetchFiles();
+            } else {
+                showToast(data.error || 'Failed to delete file', 'danger');
+                btn.disabled = false;
+                btn.textContent = '🗑️ Delete';
+            }
+        } catch (err) {
+            console.error('Error deleting file:', err);
+            showToast('Network error while deleting file', 'danger');
+            btn.disabled = false;
+            btn.textContent = '🗑️ Delete';
         }
     }
 
