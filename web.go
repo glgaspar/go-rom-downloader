@@ -385,8 +385,8 @@ func runWebServer(port string) {
 	mux.HandleFunc("POST /api/extract", handleExtractRoms)
 	mux.HandleFunc("POST /api/roms/extract", handleExtractRoms)
 	mux.HandleFunc("GET /api/files", handleFiles)
-	mux.HandleFunc("/api/files/delete", handleDeleteFile)
 	mux.HandleFunc("DELETE /api/files", handleDeleteFile)
+	mux.HandleFunc("DELETE /api/files/delete", handleDeleteFile)
 	mux.HandleFunc("POST /api/files/delete", handleDeleteFile)
 
 	addr := ":" + port
