@@ -502,27 +502,38 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (parts.length > 1) {
                         platformBadge = `<span class="platform-badge">${escapeHtml(parts[0])}</span>`;
                     }
+                    const escPath = escapeHtml(item.path);
 
                     return `
                         <tr>
                             <td>${icon} <strong>${escapeHtml(item.name)}</strong></td>
-                            <td>${platformBadge}<span class="path-code">${escapeHtml(item.path)}</span></td>
+                            <td>${platformBadge}<span class="path-code">${escPath}</span></td>
                             <td>${item.isDir ? '-' : formatBytes(item.size)}</td>
                             <td>${escapeHtml(item.modTime)}</td>
+                            <td style="text-align: right;">
+                                <button class="btn btn-cancel btn-delete-file" data-path="${escPath}">
+                                    🗑️ Delete
+                                </button>
+                            </td>
                         </tr>
                     `;
                 }).join('');
             }
         }
+
+        // Attach click listeners to all delete buttons (downloads & roms)
+        document.querySelectorAll('.btn-delete-file').forEach(btn => {
+            btn.addEventListener('click', handleDeleteFileClick);
+        });
     }
 
-    // Handle Deleting File from Downloads Staging
+    // Handle Deleting File from Storage (Downloads or ROMs)
     async function handleDeleteFileClick(e) {
         const btn = e.currentTarget;
         const path = btn.dataset.path;
         if (!path) return;
 
-        if (!confirm(`Are you sure you want to delete "${path}" from Downloads staging?`)) {
+        if (!confirm(`Are you sure you want to delete "${path}"?`)) {
             return;
         }
 
@@ -548,6 +559,32 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.disabled = false;
             btn.textContent = '🗑️ Delete';
         }
+    }
+
+    // Handle "Extract ROMs" Button Click
+    const extractRomsBtn = document.getElementById('extract-roms-btn');
+    if (extractRomsBtn) {
+        extractRomsBtn.addEventListener('click', async () => {
+            extractRomsBtn.disabled = true;
+            const originalText = extractRomsBtn.textContent;
+            extractRomsBtn.textContent = 'Extracting...';
+            try {
+                const res = await fetch('/api/roms/extract', { method: 'POST' });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(data.message || 'ROM extraction complete!', 'success');
+                    fetchFiles();
+                } else {
+                    showToast(data.error || 'Failed to extract ROMs', 'danger');
+                }
+            } catch (err) {
+                console.error('Error extracting ROMs:', err);
+                showToast('Network error while extracting ROMs', 'danger');
+            } finally {
+                extractRomsBtn.disabled = false;
+                extractRomsBtn.textContent = originalText;
+            }
+        });
     }
 
     // Handle "Organize Loose ROMs" Button Click

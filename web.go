@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/alcmoraes/go-rom-downloader/sources"
+	"github.com/alcmoraes/go-rom-downloader/utils"
 )
 
 //go:embed static/*
@@ -257,11 +258,32 @@ func handleDeleteFile(w http.ResponseWriter, r *http.Request) {
 		absDownloads = downloadsDir
 	}
 
-	targetPath := filepath.Clean(filepath.Join(absDownloads, req.Path))
+	absRoms, err := filepath.Abs(romsDir)
+	if err != nil {
+		absRoms = romsDir
+	}
 
-	rel, err := filepath.Rel(absDownloads, targetPath)
-	if err != nil || strings.HasPrefix(rel, "..") || rel == "." || targetPath == absDownloads {
-		http.Error(w, `{"error":"Invalid path or access denied outside downloads directory"}`, http.StatusBadRequest)
+	cleanRel := filepath.Clean(req.Path)
+	targetPathDl := filepath.Clean(filepath.Join(absDownloads, cleanRel))
+	targetPathRom := filepath.Clean(filepath.Join(absRoms, cleanRel))
+
+	var targetPath string
+	if _, err := os.Stat(targetPathDl); err == nil {
+		targetPath = targetPathDl
+	} else if _, err := os.Stat(targetPathRom); err == nil {
+		targetPath = targetPathRom
+	} else {
+		targetPath = targetPathDl
+	}
+
+	relDl, errDl := filepath.Rel(absDownloads, targetPath)
+	inDl := (errDl == nil && !strings.HasPrefix(relDl, "..") && relDl != "." && targetPath != absDownloads)
+
+	relRom, errRom := filepath.Rel(absRoms, targetPath)
+	inRom := (errRom == nil && !strings.HasPrefix(relRom, "..") && relRom != "." && targetPath != absRoms)
+
+	if !inDl && !inRom {
+		http.Error(w, `{"error":"Invalid path or access denied outside downloads and roms directory"}`, http.StatusBadRequest)
 		return
 	}
 
@@ -283,6 +305,50 @@ func handleDeleteFile(w http.ResponseWriter, r *http.Request) {
 		"status":  "success",
 		"message": "File deleted successfully",
 		"path":    req.Path,
+	})
+}
+
+func handleExtractRoms(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, `{"error":"Method not allowed"}`, http.StatusMethodNotAllowed)
+		return
+	}
+
+	log.Printf("[EXTRACT] Triggered ROM extraction in ROMs directory: %s", romsDir)
+	results, err := utils.ExtractRomsInDir(romsDir)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": fmt.Sprintf("Failed to extract ROMs: %v", err),
+		})
+		return
+	}
+
+	successCount := 0
+	for _, res := range results {
+		if res.Status == "success" {
+			successCount++
+		}
+	}
+
+	if successCount > 0 {
+		log.Printf("[EXTRACT] Extracted %d archives. Running post-processing organization...", successCount)
+		runPostProcessing(romsDir, "")
+	}
+
+	msg := fmt.Sprintf("Extracted %d archive(s) successfully and verified completeness.", successCount)
+	if len(results) == 0 {
+		msg = "No compressed archives found in ROMs directory."
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":         "success",
+		"message":        msg,
+		"extractedCount": successCount,
+		"results":        results,
 	})
 }
 
@@ -316,7 +382,10 @@ func runWebServer(port string) {
 	mux.HandleFunc("GET /api/downloads", handleDownloads)
 	mux.HandleFunc("GET /api/config", handleConfig)
 	mux.HandleFunc("POST /api/organize", handleOrganize)
+	mux.HandleFunc("POST /api/extract", handleExtractRoms)
+	mux.HandleFunc("POST /api/roms/extract", handleExtractRoms)
 	mux.HandleFunc("GET /api/files", handleFiles)
+	mux.HandleFunc("/api/files/delete", handleDeleteFile)
 	mux.HandleFunc("DELETE /api/files", handleDeleteFile)
 	mux.HandleFunc("POST /api/files/delete", handleDeleteFile)
 

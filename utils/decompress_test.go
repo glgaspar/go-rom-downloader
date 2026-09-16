@@ -261,3 +261,55 @@ func TestDecompressAndCleanup_ZipSlip(t *testing.T) {
 		t.Errorf("expected zip file to remain on failure, but got err: %v", err)
 	}
 }
+
+func TestExtractRomsInDir(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "test_extract_roms_dir")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	subDir := filepath.Join(tempDir, "snes")
+	if err := os.MkdirAll(subDir, 0755); err != nil {
+		t.Fatalf("failed to create subDir: %v", err)
+	}
+
+	zipPath := filepath.Join(subDir, "mario.zip")
+	zipFile, err := os.Create(zipPath)
+	if err != nil {
+		t.Fatalf("failed to create zip: %v", err)
+	}
+	zw := zip.NewWriter(zipFile)
+	w, err := zw.Create("mario.smc")
+	if err != nil {
+		t.Fatalf("failed to create entry: %v", err)
+	}
+	if _, err := w.Write([]byte("supermarioromdata")); err != nil {
+		t.Fatalf("failed to write data: %v", err)
+	}
+	zw.Close()
+	zipFile.Close()
+
+	results, err := ExtractRomsInDir(tempDir)
+	if err != nil {
+		t.Fatalf("ExtractRomsInDir failed: %v", err)
+	}
+
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result, got %d", len(results))
+	}
+
+	if results[0].Status != "success" {
+		t.Fatalf("expected status success, got %s (err: %s)", results[0].Status, results[0].Error)
+	}
+
+	extractedFile := filepath.Join(subDir, "mario.smc")
+	if _, err := os.Stat(extractedFile); err != nil {
+		t.Errorf("expected extracted file %s to exist", extractedFile)
+	}
+
+	// Original zip file should be deleted after completeness check succeeds
+	if _, err := os.Stat(zipPath); !os.IsNotExist(err) {
+		t.Errorf("expected original zip file to be deleted, but it still exists")
+	}
+}
