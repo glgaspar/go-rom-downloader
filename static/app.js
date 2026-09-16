@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join('');
 
         // Attach action handlers to download buttons
-        document.querySelectorAll('.btn-download-action').forEach(btn => {
+        resultsGrid.querySelectorAll('.btn-download-action').forEach(btn => {
             btn.addEventListener('click', handleDownloadTrigger);
         });
     }
