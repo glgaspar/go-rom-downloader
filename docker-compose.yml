@@ -9,10 +9,12 @@ services:
     volumes:
       - ./downloads:/downloads
       - ./roms:/roms
+      - ./data:/data
     environment:
       - PORT=8080
       - DOWNLOADS_DIR=/downloads
       - ROMS_DIR=/roms
+      - DATA_DIR=/data
       - ROMM_API_ADDR=http://localhost:3000
       - ROMM_API_KEY=
     restart: unless-stopped

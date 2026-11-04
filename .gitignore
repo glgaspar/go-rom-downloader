@@ -3,3 +3,4 @@ vendor/*
 downloads/
 rom-downloader
 rom-downloader.exe
+data/

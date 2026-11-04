@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - RetroROM Downloader</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="background-glow bg-glow-1"></div>
+    <div class="background-glow bg-glow-2"></div>
+
+    <main class="login-container">
+        <div class="logo-area">
+            <span class="logo-icon">👾</span>
+            <h1>RetroROM <span>Downloader</span></h1>
+        </div>
+        <section class="card">
+            <div class="card-header">
+                <div>
+                    <h2 id="login-title">Sign in</h2>
+                    <p class="subtitle" id="login-subtitle"></p>
+                </div>
+            </div>
+            <form id="login-form" class="search-form login-form">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" autocomplete="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" autocomplete="current-password" required>
+                </div>
+                <div class="form-group hidden" id="confirm-group">
+                    <label for="confirm">Confirm password</label>
+                    <input type="password" id="confirm" autocomplete="new-password">
+                </div>
+                <p class="login-error hidden" id="login-error"></p>
+                <button type="submit" class="btn btn-primary" id="login-btn">Sign in</button>
+            </form>
+        </section>
+    </main>
+    <script src="/static/login.js"></script>
+</body>
+</html>

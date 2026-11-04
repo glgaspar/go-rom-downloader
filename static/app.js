@@ -1,3 +1,11 @@
+// Send the user to the login page whenever the session is missing or expired.
+const originalFetch = window.fetch;
+window.fetch = async (...args) => {
+    const res = await originalFetch(...args);
+    if (res.status === 401) location.href = '/login';
+    return res;
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     // DOM Elements
     const searchForm = document.getElementById('search-form');
@@ -18,6 +26,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // State Store
     let sources = [];
     let activeDownloads = {};
+
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+        await fetch('/api/auth/logout', { method: 'POST' });
+        location.href = '/login';
+    });
 
     // Initial Bootstrap
     fetchConfig();

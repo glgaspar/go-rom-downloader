@@ -353,7 +353,12 @@ func handleExtractRoms(w http.ResponseWriter, r *http.Request) {
 }
 
 // runWebServer bootstraps the net/http multiplexer and starts listening.
-func runWebServer(port string) {
+func runWebServer(port, dataDir string) {
+	auth, err := newAuthStore(dataDir)
+	if err != nil {
+		log.Fatalf("Could not load credentials: %v", err)
+	}
+
 	mux := http.NewServeMux()
 
 	subFS, err := fs.Sub(staticFS, "static")
@@ -376,6 +381,12 @@ func runWebServer(port string) {
 		w.Write(data)
 	})
 
+	mux.HandleFunc("GET /login", auth.handleLoginPage)
+	mux.HandleFunc("GET /api/auth/status", auth.handleStatus)
+	mux.HandleFunc("POST /api/auth/setup", auth.handleSetup)
+	mux.HandleFunc("POST /api/auth/login", auth.handleLogin)
+	mux.HandleFunc("POST /api/auth/logout", auth.handleLogout)
+
 	mux.HandleFunc("GET /api/sources", handleSources)
 	mux.HandleFunc("GET /api/search", handleSearch)
 	mux.HandleFunc("POST /api/download", handleDownload)
@@ -396,7 +407,7 @@ func runWebServer(port string) {
 	log.Printf("ROMs directory: %s", romsDir)
 	log.Printf("Open http://localhost:%s in your browser", port)
 
-	if err := http.ListenAndServe(addr, mux); err != nil {
+	if err := http.ListenAndServe(addr, auth.middleware(mux)); err != nil {
 		log.Fatalf("Server failed: %v", err)
 	}
 }

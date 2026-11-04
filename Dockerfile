@@ -29,18 +29,19 @@ COPY --from=builder /app/rom-downloader /app/rom-downloader
 COPY post_process.py /app/post_process.py
 
 # Create default downloads and roms directories and set permissions
-RUN mkdir /downloads /roms && chmod 777 /downloads /roms
+RUN mkdir /downloads /roms /data && chmod 777 /downloads /roms && chmod 700 /data
 
 # Set environment variables
 ENV PORT=8080
 ENV DOWNLOADS_DIR=/downloads
 ENV ROMS_DIR=/roms
+ENV DATA_DIR=/data
 
 # Expose port
 EXPOSE 8080
 
 # Volumes for downloads and roms
-VOLUME ["/downloads", "/roms"]
+VOLUME ["/downloads", "/roms", "/data"]
 
 # Run the app
 ENTRYPOINT ["/app/rom-downloader"]

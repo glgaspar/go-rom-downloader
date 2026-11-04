@@ -53,6 +53,11 @@ func main() {
 		log.Fatalf("Could not create roms directory: %v", err)
 	}
 
+	dataDir := os.Getenv("DATA_DIR")
+	if dataDir == "" {
+		dataDir = "./data"
+	}
+
 	// Start Web Server
-	runWebServer(serverPort)
+	runWebServer(serverPort, dataDir)
 }
